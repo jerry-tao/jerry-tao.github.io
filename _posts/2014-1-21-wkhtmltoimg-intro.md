@@ -6,13 +6,15 @@ categories: others
 image: /assets/images/post.jpg
 ---
 
-最近有个需求需要从网页生成图片，找到了这么个东西，wkhtmltoimage，这是一个基于webkit来把网页生成图片的开源项目，可惜的是文档少的可怜，所以简单总结一下。
+最近有个需求需要从网页生成图片，找到了这么个东西，wkhtmltoimage。
+
+这是一个基于webkit来把网页生成图片的开源项目，可惜的是文档少的可怜，所以简单总结一下。
 
 通过URL生成图片：
+
 `wkhtmltoimage http://www.baidu.com/ ~/baidu.jpg`
 
-通过本地html生成图片：
-`wkhtmltoimage ~/index.html ~/index.png`
+通过本地html生成图片：`wkhtmltoimage ~/index.html ~/index.png`
 
 关于HTML中引用的资源介绍：
 

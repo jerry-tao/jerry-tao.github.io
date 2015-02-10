@@ -4,7 +4,6 @@ title: "ActiveSupport::Configurable"
 date: 2014-02-18 11:47:06
 categories: Rails Sources
 image: /assets/images/post.jpg
-
 ---
 
 Configurable是active_support里面让一个类可以实现configurable的扩展，先看一个demo。
