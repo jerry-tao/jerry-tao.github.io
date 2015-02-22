@@ -4,7 +4,6 @@ title: "ActiveSupport::Inflector"
 date: 2015-1-27 11:47:06
 categories: sources
 image: /assets/images/post.jpg
-
 ---
 
 inflector是active_support中的内容，用来处理应对不同需求的字符串。例如post -> posts，post -> Post post_controller->PostController等。

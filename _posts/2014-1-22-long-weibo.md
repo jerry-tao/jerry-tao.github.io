@@ -4,7 +4,6 @@ title:  "简单的长微博示例"
 date:   2014-01-22 11:47:06
 categories: others
 image: /assets/images/post.jpg
-
 ---
 
 长微博就是把文字转换成图片，主要用到的gem是[imgkit][imgkit]。

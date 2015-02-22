@@ -2,7 +2,7 @@
 layout: post
 title: "I18n with Rails and Angular"
 date: 2014-12-1 11:47:06
-categories: Rails&Angular
+categories: Rails And Angular
 image: /assets/images/post.jpg
 
 ---

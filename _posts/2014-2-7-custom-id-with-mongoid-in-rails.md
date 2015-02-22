@@ -4,7 +4,6 @@ title:  "自定义mongoid的model id"
 date:   2014-02-7 11:47:06
 categories: Ruby Gems
 image: /assets/images/post.jpg
-
 ---
 如果在rails使用mongoid，在返回json的时候会有个小问题，就是id格式会如下：
 

@@ -4,7 +4,6 @@ title: "Rails Test Details 1: Build Data"
 date: 2015-2-5 11:47:06
 categories: Rails
 image: /assets/images/post.jpg
-
 ---
 
 最近一直在跟测试打交道，遇见了N多爬不完的坑，所以在这里总结一下一些常见的坑。
