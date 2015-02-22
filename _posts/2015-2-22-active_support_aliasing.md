@@ -10,7 +10,7 @@ image: /assets/images/glasses.jpg
 Aliasing(`active_support/lib/active_support/core_ext/module/aliasing.rb`)是`active_support`中对module的一个扩展，这里面就定义里两个方法, `alias_method_chain`和`alias_attribute`。
 
 
-## alias_method_chain
+## alias\_method_chain
 
 这个方法有点类似轻量级的AOP, 其实这个功能ruby本身就可以通过alias和alias_method做到，这个扩展只不过让这个功能用起来更简单一些。
 
