@@ -1,7 +1,7 @@
 ---
 layout: post
-title: "ActiveSupport PerThreadRegistry：Get Controller Everywhere"
-date: 2015-2-27 11:47:06
+title: "ActiveSupport Concern"
+date: 2015-3-3 11:47:06
 categories: sources
 image: /assets/images/glasses.jpg
 
