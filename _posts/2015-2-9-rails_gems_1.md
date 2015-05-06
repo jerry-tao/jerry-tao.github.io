@@ -38,6 +38,7 @@ image: /assets/images/post.jpg
 - [simplecov]: 测试覆盖率。
 
 ## 数据库类
+
 - [activerecord-session_store](https://github.com/rails/activerecord-session_store): 把session保存在数据库。
 
 - [seedbank]: 默认的seed增强方案。
@@ -94,9 +95,17 @@ devise衍生出了很多gem，不一一描述。
 
 - [rails_admin]: 管理员后台快速搭建。
 
-- [jazz_fingers]: 这个gem很cool，推荐可以一直使用。
+- [jazz_fingers]: 这个gem是irb的增强，集成了pry，awesome_print之类的东西，尤其在rails的console里使用效果不错。（不过发现速度不是很理想，）
 
 - [simple_form]: 继续提高生产力。
+
+- [brakeman]: 聊胜于无的代码安全检查。
+
+- [rubocop]: 代码风格检查（跟rails_best_practices差不多的东西）。
+
+- [rails_best_practices]：跟上面差不多的东西。
+
+- [lograge]: 不错的logger gem。
 
 ## 服务器&&Deploy
 
