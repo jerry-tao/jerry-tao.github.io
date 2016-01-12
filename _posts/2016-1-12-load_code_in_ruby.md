@@ -60,7 +60,7 @@ require '../main'
 
 $LOADED\_FEATURES里保存了已经require过的文件，$LOAD\_PATH里保存了查找文件的路径，两者都是数组结构。
 
-以`require 'benchmark'`为例，在不考虑更复杂的（例如包含了gem或者rails的情况下，下面还会继续介绍），典型的查找流程是这样，现在$LOADED\_FEATURES里查找是否以及require过这个文件，如果已经require过，则返回false，如果没有，则会在$LOAD\_PATH内依次查找这个文件。
+以`require 'benchmark'`为例，在不考虑更复杂的（例如包含了gem或者rails的情况下，下面还会继续介绍），典型的查找流程是这样，现在$LOADED\_FEATURES里查找是否已经require过这个文件，如果已经require过，则返回false，如果没有，则会在$LOAD\_PATH内依次查找这个文件。
 
 继续上面的例子，改写如下：
 
@@ -120,7 +120,7 @@ puts "LOADED_FEATURES: #{$".select {|item| item.index('person')}}"
 p = Person.new
 puts "LOADED_FEATURES: #{$".select {|item| item.index('person')}}"
 # => LOADED_FEATURES: []
-# => LOADED_FEATURES: ["/Users/jerry/Workspaces/rails/book/demo/person.rb"]
+# => LOADED_FEATURES: ["/path/demo/person.rb"]
 ```
 
 
