@@ -247,7 +247,7 @@ k2.arrs
 class C
   def coerce(n)
     puts n
-    [5,n]
+    [n,5]
   end
   def to_s
     "CCCC"
