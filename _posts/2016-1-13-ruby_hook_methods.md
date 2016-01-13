@@ -197,15 +197,24 @@ module M
     puts 'included'
     mod.new.new_method
   end
+
+  def self.const_missing(const_name) # 当常量丢失时执行
+    puts const_name
+  end
+
+  MissingConst # 访问不存在常量
 end
+# => MissingConst
+M::MissingPerson
+# => MissingPerson # 访问不存在常量
 ```
 
 对于prepend和extend两组来说也是如此。
 
 **Marshal相关**
 
-marshal\_dump: 当Marshal.dump(@obj)时执行。
-marshal\_load: 当Marshal.load(@obj)时执行。
+- marshal\_dump: 当Marshal.dump(@obj)时执行。
+- marshal\_load: 当Marshal.load(@obj)时执行。
 
 ```ruby
 class C
