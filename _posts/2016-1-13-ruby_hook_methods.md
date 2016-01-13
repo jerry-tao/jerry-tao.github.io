@@ -6,7 +6,7 @@ categories: ruby
 image: /assets/images/old-1130743_1280.jpg
 ---
 
-Hook Methods一般译为钩子方法，可以理解为当触发了某个条件执行的方法。例如我们常见的method\_missing和上一章里介绍的const\_missing。
+Hook Methods一般译为钩子方法，可以理解为当触发了某个条件执行的方法。例如我们常见的method\_missing。
 
 **Method相关**
 
