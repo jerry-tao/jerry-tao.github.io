@@ -1,18 +1,15 @@
 ---
 layout: post
-title: "Rails Routes 源码（1）"
-date: 2017-2-16 12:47:06
+title: "Rails Routes 源码(1)"
+date: 2017-2-15 12:47:06
 categories: Rails
 image: /assets/images/old-1130743_1280.jpg
 ---
 
 
-从这个开始开始总结一下Rails里的routes，不定期更新。
-
 Rails的routes的所有源码所在位置都在：
 
-ActionPack
-|--ActionDispatch
+ActionPack => ActionDispatch
 
 ActionDispatch这个模块就是负责用来处理HTTP相关以及跟rack一起使用的模块，可以分为下面四个部分：
 
@@ -59,7 +56,7 @@ class Mapper
   end
 
   def match(*argv) 
-    @set.add_route(Mapping.new(argv))
+    @set.add_route(Mapping.build(argv))
   end  
 end
 ```
@@ -67,16 +64,16 @@ end
 在这里把路由都统一处理成mapping对象插入回RouteSet，
 
 ```
-def add_route(route)
-  @set.add_route(route)
+def add_route(mapping)
+  @set.add_route(mapping)
 end
 ```
 
 在Journey::Routes中的add_route方法大概如下：
 
 ```
-def add_route(route)
-  @routes << Journey::Route.new(route)
+def add_route(mapping)
+  @routes << Journey::Route.new(mapping)
 end
 ```
 
