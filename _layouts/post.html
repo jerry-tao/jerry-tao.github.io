@@ -50,7 +50,7 @@
           <a name="topofpage"></a>
           {{content}}
         </section>
-        <div class="ds-share"  data-thread-key="{{page.id}}" data-title="{{page.title}}"  data-images="site.author_image" data-content="Just another blog." ddata-url="{{page.url | prepend: site.baseurl}}">
+        <div class="ds-share"  data-thread-key="{{page.id}}" data-title="{{page.title}}"  data-images="site.author_image" data-content="Just another blog."  data-url="{{site.url}}{{page.url}}}">
     <div class="ds-share-inline">
       <ul  class="ds-share-icons-16">
       	
@@ -66,7 +66,7 @@
     </div>
  </div>
         <!-- 多说评论框 start -->
-        <div class="ds-thread" data-thread-key="{{page.id}}" data-title="{{page.title}}" data-url="{{page.url | prepend: site.baseurl}}"></div>
+        <div class="ds-thread" data-thread-key="{{page.id}}" data-title="{{page.title}}" data-url="{{site.url}}{{page.url}}"></div>
       <!-- 多说评论框 end -->
       <!-- 多说公共JS代码 start (一个网页只需插入一次) -->
       <script type="text/javascript">
