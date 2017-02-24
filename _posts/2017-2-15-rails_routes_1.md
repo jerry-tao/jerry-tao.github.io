@@ -3,7 +3,7 @@ layout: post
 title: "Rails Routes 源码(1)"
 date: 2017-2-15 12:47:06
 categories: Rails
-image: /assets/images/old-1130743_1280.jpg
+image: /assets/images/stopwatch-2061845_1280.jpg
 ---
 
 

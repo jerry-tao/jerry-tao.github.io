@@ -3,7 +3,7 @@ layout: post
 title: "Rails Routes 源码(2)"
 date: 2017-2-22 20:47:06
 categories: Rails
-image: /assets/images/old-1130743_1280.jpg
+image: /assets/images/stopwatch-2061845_1280.jpg
 ---
 
 这篇文章会详细的介绍定义路由的细节。
