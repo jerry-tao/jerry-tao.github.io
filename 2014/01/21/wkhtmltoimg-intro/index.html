@@ -3,8 +3,8 @@
 <head>
   
   <meta charset="utf-8">
-  <title>Jerry Tao</title>
-  <meta name="description" content="Jerry Tao">
+  <title>wkhtmltoimage简介</title>
+  <meta name="description" content="wkhtmltoimage简介">
   <meta name="author" content="">
   
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -336,8 +336,6 @@ body {
 
   
   
-  <link href="http://blog.jerry-tao.com/index.xml" rel="alternate" type="application/rss+xml" title="Jerry Tao Feed" />
-  
 
   <meta name="generator" content="Hugo 0.31.1" />
   
@@ -388,831 +386,78 @@ body {
 <div class="pure-g">
     <div class="pure-u-1-24 pure-u-md-5-24"></div>
 	<div class="pure-u-11-12 pure-u-md-5-8">
-	<div class="post-content">
-	
-	  <p class="posts-name">Recent posts:</p>
+        <div class="post">
 
-	  <ul class="posts">
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2017/08/08/ruby_process/">Ruby Process</a>
+            <div class="post-title">
+                <p class="footnote">
+                    <time class="">01-21-2014</time>
+		            
+                    
+                    |
+                    
+                    
 
-		  <p class="footnote">
-			<time datetime="08-08-2017T00:00:00Z">08-08-2017</time>
+                    
+                    categories: [<a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
+                    
 
-			
-		  |	
-			
+                    
+                </p>
+                <h1>wkhtmltoimage简介</h1>
+            </div>
 
-			
+            <div class="post-content">
+                <p>最近有个需求需要从网页生成图片，找到了这么个东西，wkhtmltoimage。</p>
 
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<p>这是一个基于webkit来把网页生成图片的开源项目，可惜的是文档少的可怜，所以简单总结一下。</p>
 
-			
+<p>通过URL生成图片：</p>
 
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2017/03/16/cache_cluster_in_ruby_demo/">杂七杂八的缓存</a>
+<p><code>wkhtmltoimage http://www.baidu.com/ ~/baidu.jpg</code></p>
 
-		  <p class="footnote">
-			<time datetime="03-16-2017T20:47:06Z">03-16-2017</time>
+<p>通过本地html生成图片：<code>wkhtmltoimage ~/index.html ~/index.png</code></p>
 
-			
-		  |	
-			
+<p>关于HTML中引用的资源介绍：</p>
 
-			
+<p>只要你通过浏览器打开你要生成图片的HTML，如果所有资源都正常被引用了，那么在生成的时候就不会丢失。</p>
 
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<p>关于HTML中CSS样式介绍：</p>
 
-			
+<p>因为是基于webkit的，所以跟chrome打开的效果最接近。</p>
 
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2017/03/08/gateway_in_mruby/">实现一个简单的Gateway</a>
+<p>关于HTML中js load的介绍：
+有很多网页有很多图片等资源是后加载进来的，为了测试这种情况我们试一下jd的首页：
+<code>wkhtmltoimage http://www.jd.com ~/jd.png</code></p>
 
-		  <p class="footnote">
-			<time datetime="03-08-2017T20:47:06Z">03-08-2017</time>
+<p>打开之后可以发现所有图片资源都没有正常显示，关于这点大家要注意一下。</p>
 
-			
-		  |	
-			
+<p>关于生成图片的尺寸：
+<code>wkhtmltoimage --height 200 --width 400  http://www.baidu.com/ ~/baidu-small.png</code></p>
 
-			
+<p>这个height跟width类似你用浏览器访问，然后resize浏览器到这个大小的时候的显示情况。</p>
 
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<p>关于生产图片的质量：
+<code>wkhtmltoimage --quality 30 http://www.baidu.com ~/baidu-quality.png</code></p>
 
-			
+<p>这个可以设置生成图片的质量，默认是94,取值范围是0～100.</p>
 
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2017/02/22/rails_routes_2/">Rails Routes 源码(2)</a>
+<p>关于生成图片的大小：
+有些时候我们不想对整个网页截图，所以需要设置一些剪切效果。
+<code>wkhtmltoimage --crop-h 20 --crop-w 20 --crop-x 0 --crop-y 0 http://www.baidu.com/ ~/bd-small.png</code></p>
 
-		  <p class="footnote">
-			<time datetime="02-22-2017T20:47:06Z">02-22-2017</time>
+<p>这个会生成一个高20宽20的以（0,0）为起点坐标的正方形图片。</p>
 
-			
-		  |	
-			
+<p>关于生成图片的格式：</p>
 
-			
+<p>默认支持的格式包括PNG，JPG，TIFF，基本涵盖了常见的图片格式，通过后缀就可以实现。</p>
 
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<p>同时，还有一个wkhtmltopdf的项目，跟这个使用方式类似。</p>
 
-			
+<p>wkhtmltoimage的下载地址：
+<a href="http://code.google.com/p/wkhtmltopdf/downloads/detail?name=wkhtmltoimage-0.11.0_rc1-static-amd64.tar.bz2">wkhtmltoimage</a></p>
 
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2017/02/15/rails_routes_1/">Rails Routes 源码(1)</a>
-
-		  <p class="footnote">
-			<time datetime="02-15-2017T12:47:06Z">02-15-2017</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2017/02/07/load_balance/">Load Balance简介</a>
-
-		  <p class="footnote">
-			<time datetime="02-07-2017T12:47:06Z">02-07-2017</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2017/02/03/http2/">HTTP2简介</a>
-
-		  <p class="footnote">
-			<time datetime="02-03-2017T12:47:06Z">02-03-2017</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2016/09/09/lazy_hash/">使用延迟加载来优化redis请求</a>
-
-		  <p class="footnote">
-			<time datetime="09-09-2016T12:47:06Z">09-09-2016</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2016/09/05/redis_ziplist/">Redis Ziplist总结</a>
-
-		  <p class="footnote">
-			<time datetime="09-05-2016T12:47:06Z">09-05-2016</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2016/03/15/order_no_demo/">高并发订单号池</a>
-
-		  <p class="footnote">
-			<time datetime="03-15-2016T20:47:06Z">03-15-2016</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2016/01/14/singleton_class_for_dummy/">Singleton Class简明教程</a>
-
-		  <p class="footnote">
-			<time datetime="01-14-2016T14:47:06Z">01-14-2016</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2016/01/13/ruby_hook_methods/">Ruby Hook Methods</a>
-
-		  <p class="footnote">
-			<time datetime="01-13-2016T14:47:06Z">01-13-2016</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2016/01/12/load_code_in_ruby/">Ruby加载代码的二三事</a>
-
-		  <p class="footnote">
-			<time datetime="01-12-2016T14:47:06Z">01-12-2016</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2016/01/11/all_about_const_lookup/">关于Constant查找的一切(译)</a>
-
-		  <p class="footnote">
-			<time datetime="01-11-2016T14:47:06Z">01-11-2016</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/09/29/rails_log_process/">Rails Log Process</a>
-
-		  <p class="footnote">
-			<time datetime="09-29-2015T14:47:06Z">09-29-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/08/14/move_development_to_docer/">Move Rails Development to Docker</a>
-
-		  <p class="footnote">
-			<time datetime="08-14-2015T14:47:06Z">08-14-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/05/06/a_little_piece_code_in_action_controller/">A Little Piece Code in ActionController</a>
-
-		  <p class="footnote">
-			<time datetime="05-06-2015T11:47:06Z">05-06-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/03/12/active_support_backtrace/">ActiveSupport BacktraceCleaner</a>
-
-		  <p class="footnote">
-			<time datetime="03-12-2015T11:47:06Z">03-12-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/03/06/angular_best_practices/">Angular Best Practices</a>
-
-		  <p class="footnote">
-			<time datetime="03-06-2015T11:47:06Z">03-06-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/03/03/active_support_concern/">ActiveSupport Concern</a>
-
-		  <p class="footnote">
-			<time datetime="03-03-2015T11:47:06Z">03-03-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/02/27/active_support_get_controller_everywhere/">ActiveSupport PerThreadRegistry：Get Controller Everywhere</a>
-
-		  <p class="footnote">
-			<time datetime="02-27-2015T11:47:06Z">02-27-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/02/23/active_support_notifications/">ActiveSupport Notifications</a>
-
-		  <p class="footnote">
-			<time datetime="02-23-2015T11:47:06Z">02-23-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/02/22/active_support_aliasing/">ActiveSupport Aliasing</a>
-
-		  <p class="footnote">
-			<time datetime="02-22-2015T11:47:06Z">02-22-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/02/09/rails_gems_1/">Rails常用Gem</a>
-
-		  <p class="footnote">
-			<time datetime="02-09-2015T11:47:06Z">02-09-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/02/06/rails_test_details_2/">Rails Test Details 2: Model Test</a>
-
-		  <p class="footnote">
-			<time datetime="02-06-2015T11:47:06Z">02-06-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/02/05/rails_test_details_1/">Rails Test Details 1: Build Data</a>
-
-		  <p class="footnote">
-			<time datetime="02-05-2015T11:47:06Z">02-05-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/02/04/use_postgresql_uuid_in_rails/">Use Postgresql uuid in Rails</a>
-
-		  <p class="footnote">
-			<time datetime="02-04-2015T11:47:06Z">02-04-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/01/27/active_support_inflector/">ActiveSupport::Inflector</a>
-
-		  <p class="footnote">
-			<time datetime="01-27-2015T11:47:06Z">01-27-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2014/12/01/i18n_with_rails_and_angular/">I18n with Rails and Angular</a>
-
-		  <p class="footnote">
-			<time datetime="12-01-2014T11:47:06Z">12-01-2014</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2014/02/18/active_support-configurable-in-rails/">ActiveSupport::Configurable</a>
-
-		  <p class="footnote">
-			<time datetime="02-18-2014T11:47:06Z">02-18-2014</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2014/02/07/custom-id-with-mongoid-in-rails/">自定义mongoid的model id</a>
-
-		  <p class="footnote">
-			<time datetime="02-07-2014T11:47:06Z">02-07-2014</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2014/01/22/long-weibo/">简单的长微博示例</a>
-
-		  <p class="footnote">
-			<time datetime="01-22-2014T11:47:06Z">01-22-2014</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2014/01/21/wkhtmltoimg-intro/">wkhtmltoimage简介</a>
-
-		  <p class="footnote">
-			<time datetime="01-21-2014T11:47:06Z">01-21-2014</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2014/01/20/ruby-std-lib-open3/">Ruby标准库学习：Open3</a>
-
-		  <p class="footnote">
-			<time datetime="01-20-2014T11:47:06Z">01-20-2014</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-	  </ul>
-	</div>
+            </div>
+        </div>
 	</div>
     <div class="pure-u-1-24 pure-u-md-1-6"></div>
 </div>
@@ -1233,7 +478,7 @@ body {
 
         </ul>
         <a href="#" class="pure-menu-link pull-right" id="gototop-btn">↑↑</a>
-        <a href="http://blog.jerry-tao.com/index.xml" class="pure-menu-link pull-right">RSS</a>
+        <a href="" class="pure-menu-link pull-right">RSS</a>
       </div>
       
       <p id="foot-copyright">(c) 2013 -- 2017</p>

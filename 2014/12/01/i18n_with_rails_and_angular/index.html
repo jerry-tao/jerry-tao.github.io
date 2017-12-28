@@ -3,8 +3,8 @@
 <head>
   
   <meta charset="utf-8">
-  <title>Jerry Tao</title>
-  <meta name="description" content="Jerry Tao">
+  <title>I18n with Rails and Angular</title>
+  <meta name="description" content="I18n with Rails and Angular">
   <meta name="author" content="">
   
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -336,8 +336,6 @@ body {
 
   
   
-  <link href="http://blog.jerry-tao.com/index.xml" rel="alternate" type="application/rss+xml" title="Jerry Tao Feed" />
-  
 
   <meta name="generator" content="Hugo 0.31.1" />
   
@@ -388,831 +386,176 @@ body {
 <div class="pure-g">
     <div class="pure-u-1-24 pure-u-md-5-24"></div>
 	<div class="pure-u-11-12 pure-u-md-5-8">
-	<div class="post-content">
-	
-	  <p class="posts-name">Recent posts:</p>
-
-	  <ul class="posts">
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2017/08/08/ruby_process/">Ruby Process</a>
-
-		  <p class="footnote">
-			<time datetime="08-08-2017T00:00:00Z">08-08-2017</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+        <div class="post">
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2017/03/16/cache_cluster_in_ruby_demo/">杂七杂八的缓存</a>
-
-		  <p class="footnote">
-			<time datetime="03-16-2017T20:47:06Z">03-16-2017</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+            <div class="post-title">
+                <p class="footnote">
+                    <time class="">12-01-2014</time>
+		            
+                    
+                    |
+                    
+                    
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2017/03/08/gateway_in_mruby/">实现一个简单的Gateway</a>
-
-		  <p class="footnote">
-			<time datetime="03-08-2017T20:47:06Z">03-08-2017</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+                    
+                    categories: [<a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
+                    
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2017/02/22/rails_routes_2/">Rails Routes 源码(2)</a>
-
-		  <p class="footnote">
-			<time datetime="02-22-2017T20:47:06Z">02-22-2017</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+                    
+                </p>
+                <h1>I18n with Rails and Angular</h1>
+            </div>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2017/02/15/rails_routes_1/">Rails Routes 源码(1)</a>
-
-		  <p class="footnote">
-			<time datetime="02-15-2017T12:47:06Z">02-15-2017</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+            <div class="post-content">
+                
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2017/02/07/load_balance/">Load Balance简介</a>
-
-		  <p class="footnote">
-			<time datetime="02-07-2017T12:47:06Z">02-07-2017</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<p>这里简单记录一下rails和angular一起完成i18n的流程。</p>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2017/02/03/http2/">HTTP2简介</a>
-
-		  <p class="footnote">
-			<time datetime="02-03-2017T12:47:06Z">02-03-2017</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<h1 id="part-1-i18n-with-rails">Part 1: I18n with Rails</h1>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2016/09/09/lazy_hash/">使用延迟加载来优化redis请求</a>
-
-		  <p class="footnote">
-			<time datetime="09-09-2016T12:47:06Z">09-09-2016</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<h3 id="写locales文件">写locales文件</h3>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2016/09/05/redis_ziplist/">Redis Ziplist总结</a>
-
-		  <p class="footnote">
-			<time datetime="09-05-2016T12:47:06Z">09-05-2016</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<p>locale文件默认存在于config/locales/</p>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2016/03/15/order_no_demo/">高并发订单号池</a>
-
-		  <p class="footnote">
-			<time datetime="03-15-2016T20:47:06Z">03-15-2016</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<p>可修改，定义位置在application配置里</p>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2016/01/14/singleton_class_for_dummy/">Singleton Class简明教程</a>
-
-		  <p class="footnote">
-			<time datetime="01-14-2016T14:47:06Z">01-14-2016</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby">config<span style="color:#f92672">.</span>i18n<span style="color:#f92672">.</span>default_locale<span style="color:#f92672">=</span><span style="color:#e6db74">:en</span> <span style="color:#75715e">#设置默认的语言</span>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2016/01/13/ruby_hook_methods/">Ruby Hook Methods</a>
-
-		  <p class="footnote">
-			<time datetime="01-13-2016T14:47:06Z">01-13-2016</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<span style="color:#75715e">#config/locales/</span>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2016/01/12/load_code_in_ruby/">Ruby加载代码的二三事</a>
-
-		  <p class="footnote">
-			<time datetime="01-12-2016T14:47:06Z">01-12-2016</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<span style="color:#75715e">#config/locales/page.yml</span>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2016/01/11/all_about_const_lookup/">关于Constant查找的一切(译)</a>
-
-		  <p class="footnote">
-			<time datetime="01-11-2016T14:47:06Z">01-11-2016</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<span style="color:#75715e">#config/locales/message.yml</span></code></pre></div>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/09/29/rails_log_process/">Rails Log Process</a>
-
-		  <p class="footnote">
-			<time datetime="09-29-2015T14:47:06Z">09-29-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<p>locale默认是yml格式，比如下面就是定义英文的key</p>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/08/14/move_development_to_docer/">Move Rails Development to Docker</a>
-
-		  <p class="footnote">
-			<time datetime="08-14-2015T14:47:06Z">08-14-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#e6db74">en</span>:
+  <span style="color:#e6db74">hello</span>: <span style="color:#66d9ef">Hello</span> <span style="color:#66d9ef">Wrold</span></code></pre></div>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/05/06/a_little_piece_code_in_action_controller/">A Little Piece Code in ActionController</a>
-
-		  <p class="footnote">
-			<time datetime="05-06-2015T11:47:06Z">05-06-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<h3 id="设置locale">设置locale</h3>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/03/12/active_support_backtrace/">ActiveSupport BacktraceCleaner</a>
-
-		  <p class="footnote">
-			<time datetime="03-12-2015T11:47:06Z">03-12-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<p>这里的核心就是在后台要获取到需要使用的语言环境。</p>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/03/06/angular_best_practices/">Angular Best Practices</a>
-
-		  <p class="footnote">
-			<time datetime="03-06-2015T11:47:06Z">03-06-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<p>最简单的办法：</p>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/03/03/active_support_concern/">ActiveSupport Concern</a>
-
-		  <p class="footnote">
-			<time datetime="03-03-2015T11:47:06Z">03-03-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<p>在application_controller里面添加：</p>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/02/27/active_support_get_controller_everywhere/">ActiveSupport PerThreadRegistry：Get Controller Everywhere</a>
-
-		  <p class="footnote">
-			<time datetime="02-27-2015T11:47:06Z">02-27-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby">before_action <span style="color:#e6db74">:set_locale</span>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/02/23/active_support_notifications/">ActiveSupport Notifications</a>
-
-		  <p class="footnote">
-			<time datetime="02-23-2015T11:47:06Z">02-23-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e"></span><span style="color:#f92672"></span><span style="color:#a6e22e">set_locale</span>
+  <span style="color:#66d9ef">I18n</span><span style="color:#f92672">.</span>locale <span style="color:#f92672">=</span> params<span style="color:#f92672">[</span><span style="color:#e6db74">:locale</span><span style="color:#f92672">]</span> <span style="color:#f92672">||</span> <span style="color:#66d9ef">I18n</span><span style="color:#f92672">.</span>default_locale
+<span style="color:#66d9ef">end</span></code></pre></div>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/02/22/active_support_aliasing/">ActiveSupport Aliasing</a>
-
-		  <p class="footnote">
-			<time datetime="02-22-2015T11:47:06Z">02-22-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<p>这样例如下面的请求就会使用de.yml里的key</p>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/02/09/rails_gems_1/">Rails常用Gem</a>
-
-		  <p class="footnote">
-			<time datetime="02-09-2015T11:47:06Z">02-09-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<p><code>http://localhost:3000?locale=de</code></p>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/02/06/rails_test_details_2/">Rails Test Details 2: Model Test</a>
-
-		  <p class="footnote">
-			<time datetime="02-06-2015T11:47:06Z">02-06-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<h3 id="翻译内容">翻译内容</h3>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/02/05/rails_test_details_1/">Rails Test Details 1: Build Data</a>
-
-		  <p class="footnote">
-			<time datetime="02-05-2015T11:47:06Z">02-05-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<p>两个地方：</p>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/02/04/use_postgresql_uuid_in_rails/">Use Postgresql uuid in Rails</a>
-
-		  <p class="footnote">
-			<time datetime="02-04-2015T11:47:06Z">02-04-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<ul>
+<li>返回的message里</li>
+<li>view里面直接翻译</li>
+</ul>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/01/27/active_support_inflector/">ActiveSupport::Inflector</a>
-
-		  <p class="footnote">
-			<time datetime="01-27-2015T11:47:06Z">01-27-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<p>其实都一样：</p>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2014/12/01/i18n_with_rails_and_angular/">I18n with Rails and Angular</a>
-
-		  <p class="footnote">
-			<time datetime="12-01-2014T11:47:06Z">12-01-2014</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#75715e">#在controller里</span>
+redern <span style="color:#e6db74">json</span>: {<span style="color:#e6db74">hello</span>: t(<span style="color:#e6db74">:hello</span>)}
+<span style="color:#75715e">#在view里</span>
+<span style="color:#f92672">&lt;%=</span>t(<span style="color:#e6db74">:hello</span>)<span style="color:#f92672">%&gt;</span></code></pre></div>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2014/02/18/active_support-configurable-in-rails/">ActiveSupport::Configurable</a>
-
-		  <p class="footnote">
-			<time datetime="02-18-2014T11:47:06Z">02-18-2014</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<p>这两种翻译都会生成Hello World</p>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2014/02/07/custom-id-with-mongoid-in-rails/">自定义mongoid的model id</a>
-
-		  <p class="footnote">
-			<time datetime="02-07-2014T11:47:06Z">02-07-2014</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2014/01/22/long-weibo/">简单的长微博示例</a>
-
-		  <p class="footnote">
-			<time datetime="01-22-2014T11:47:06Z">01-22-2014</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2014/01/21/wkhtmltoimg-intro/">wkhtmltoimage简介</a>
-
-		  <p class="footnote">
-			<time datetime="01-21-2014T11:47:06Z">01-21-2014</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2014/01/20/ruby-std-lib-open3/">Ruby标准库学习：Open3</a>
-
-		  <p class="footnote">
-			<time datetime="01-20-2014T11:47:06Z">01-20-2014</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-	  </ul>
-	</div>
+<h1 id="part-2-localeapp-with-rails">Part 2: localeapp with Rails</h1>
+
+<p>在localapp.com新建一个project。</p>
+
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#75715e">#然后添加localeapp的gem。</span>
+<span style="color:#e6db74">`gem &#39;localeapp&#39;`</span>
+<span style="color:#75715e">#根据你的key安装一下</span>
+<span style="color:#e6db74">`bundle exec localeapp install &lt;API_KEY&gt;`</span></code></pre></div>
+
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#75715e">#config/initializers/localeapp.rb</span>
+require <span style="color:#e6db74">&#39;localeapp/rails&#39;</span>
+<span style="color:#66d9ef">Localeapp</span><span style="color:#f92672">.</span>configure <span style="color:#66d9ef">do</span> <span style="color:#f92672">|</span>config<span style="color:#f92672">|</span>
+  config<span style="color:#f92672">.</span>api_key <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;YOUR_API_KEY_HERE&#39;</span>
+  config<span style="color:#f92672">.</span>sending_environments <span style="color:#f92672">=</span> <span style="color:#f92672">[]</span>
+  config<span style="color:#f92672">.</span>polling_environments <span style="color:#f92672">=</span> <span style="color:#f92672">[]</span>
+  config<span style="color:#f92672">.</span>reloading_environments <span style="color:#f92672">=</span> <span style="color:#f92672">[]</span>
+<span style="color:#66d9ef">end</span></code></pre></div>
+
+<p>可以在项目内完成en.yml 然后推送至服务器交给其他人完成其他语言的翻译。</p>
+
+<h1 id="part-3-angular-translate-with-rails">Part 3: angular-translate with rails</h1>
+
+<p>在你的bower.json里添加<code>&quot;angular-translate&quot;:&quot;latest&quot;</code></p>
+
+<p>在你的html里引用这个angular-translate.js</p>
+
+<p>在你的angular里配置一下angular-translate</p>
+
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-coffee" data-lang="coffee"><span style="color:#a6e22e">var</span> app = <span style="color:#a6e22e">angular</span>.<span style="color:#a6e22e">module</span>(<span style="color:#e6db74">&#39;myApp&#39;</span>,[<span style="color:#e6db74">&#39;pascalprecht.translate&#39;</span>])
+
+<span style="color:#a6e22e">angular</span>.<span style="color:#a6e22e">module</span> <span style="color:#e6db74">&#39;app&#39;</span>
+.<span style="color:#a6e22e">config</span> <span style="color:#a6e22e">($translateProvider)-&gt;</span>
+  <span style="color:#a6e22e">$translateProvider</span>.<span style="color:#a6e22e">preferredLanguage</span>(<span style="color:#e6db74">&#39;en&#39;</span>)
+  <span style="color:#a6e22e">$translateProvider</span>.<span style="color:#a6e22e">useUrlLoader</span>(<span style="color:#e6db74">&#39;YOUR_DOMAIN:YOUR_PORT/locales&#39;</span>)</code></pre></div>
+
+<p>在你的后台写一个action去响应这个请求 render json</p>
+
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e"></span><span style="color:#f92672"></span><span style="color:#a6e22e">locales</span>
+  locale_folder <span style="color:#f92672">=</span> <span style="color:#66d9ef">File</span><span style="color:#f92672">.</span>join(<span style="color:#66d9ef">Rails</span><span style="color:#f92672">.</span>root, <span style="color:#e6db74">&#39;config/locales&#39;</span>)
+  @locale_json <span style="color:#f92672">=</span> {}
+
+  <span style="color:#66d9ef">Dir</span><span style="color:#f92672">[</span><span style="color:#66d9ef">File</span><span style="color:#f92672">.</span>join(locale_folder, <span style="color:#e6db74">&#39;*.yml&#39;</span>)<span style="color:#f92672">].</span>sort<span style="color:#f92672">.</span>each { <span style="color:#f92672">|</span>locale<span style="color:#f92672">|</span>
+    locale_yml <span style="color:#f92672">=</span> <span style="color:#66d9ef">YAML</span><span style="color:#f92672">::</span>load(<span style="color:#66d9ef">IO</span><span style="color:#f92672">.</span>read(locale))
+    lang <span style="color:#f92672">=</span> params<span style="color:#f92672">[</span><span style="color:#e6db74">&#39;lang&#39;</span><span style="color:#f92672">].</span>nil? ? <span style="color:#66d9ef">I18n</span><span style="color:#f92672">.</span>default_locale<span style="color:#f92672">.</span>to_s : params<span style="color:#f92672">[</span><span style="color:#e6db74">&#39;lang&#39;</span><span style="color:#f92672">]</span>
+    locale_hash <span style="color:#f92672">=</span> locale_yml<span style="color:#f92672">.</span>to_hash<span style="color:#f92672">[</span>lang<span style="color:#f92672">]</span>
+    @locale_json<span style="color:#f92672">.</span>merge! locale_hash <span style="color:#66d9ef">unless</span> locale_hash<span style="color:#f92672">.</span>nil?
+  }
+  render <span style="color:#e6db74">json</span>: @locale_json
+<span style="color:#66d9ef">end</span></code></pre></div>
+
+<p>在你要翻译的地方 可以使用以下三种翻译方式</p>
+
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-coffee" data-lang="coffee">{{<span style="color:#e6db74">&#39;hello&#39;</span> <span style="color:#f92672">|</span> <span style="color:#a6e22e">translate</span>}} <span style="color:#75715e"># filter
+</span><span style="color:#75715e"></span>
+<span style="color:#f92672">&lt;</span><span style="color:#a6e22e">h4</span> <span style="color:#a6e22e">translate</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#39;page.title&#39;</span><span style="color:#f92672">&gt;</span> <span style="color:#75715e"># directive
+</span><span style="color:#75715e"></span>
+<span style="color:#a6e22e">$translate</span>([<span style="color:#e6db74">&#39;page.title&#39;</span>]).<span style="color:#66d9ef">then</span> <span style="color:#a6e22e">(translations) -&gt;</span>
+    $scope.page_title = <span style="color:#a6e22e">translations</span>[<span style="color:#e6db74">&#34;page.title&#34;</span>] <span style="color:#960050;background-color:#1e0010">#</span> <span style="color:#a6e22e">provider</span></code></pre></div>
+
+<p>然后在页面上直接使用 <code>{{page_title}}</code>即可</p>
+
+<p>注： <code>&lt;h4 translate='page.title'&gt;</code>这种使用方式目前还是有bug的 尽量使用在不复杂的页面环境下。</p>
+
+<p>切换不同的语言使用<code>$translate.uses('de_DE')</code>。</p>
+
+<h2 id="references">References</h2>
+
+<ul>
+<li><p>rails-i18n: <a href="http://guides.rubyonrails.org/i18n.html">http://guides.rubyonrails.org/i18n.html</a></p></li>
+
+<li><p>localeapp: <a href="https://github.com/Locale/localeapp">https://github.com/Locale/localeapp</a></p></li>
+
+<li><p>angular-transllate: <a href="https://github.com/angular-translate/angular-translate">https://github.com/angular-translate/angular-translate</a></p></li>
+</ul>
+
+<!--
+## Part 4 I18n的一些细节
+## 不支持太详细的设定 可以使用globalize3设定
+## 如果想翻译数据还是很麻烦的 需要使用globalize3来翻译数据部分
+## i18n gem包含两部分 public 和 backend backend可以随便换
+public api部分包括
+ translate localize
+ t   l
+ load_path locale default_locale exception_handler backend
+ -->
+
+            </div>
+        </div>
 	</div>
     <div class="pure-u-1-24 pure-u-md-1-6"></div>
 </div>
@@ -1233,7 +576,7 @@ body {
 
         </ul>
         <a href="#" class="pure-menu-link pull-right" id="gototop-btn">↑↑</a>
-        <a href="http://blog.jerry-tao.com/index.xml" class="pure-menu-link pull-right">RSS</a>
+        <a href="" class="pure-menu-link pull-right">RSS</a>
       </div>
       
       <p id="foot-copyright">(c) 2013 -- 2017</p>

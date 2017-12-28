@@ -3,8 +3,8 @@
 <head>
   
   <meta charset="utf-8">
-  <title>Jerry Tao</title>
-  <meta name="description" content="Jerry Tao">
+  <title>Angular Best Practices</title>
+  <meta name="description" content="Angular Best Practices">
   <meta name="author" content="">
   
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -336,8 +336,6 @@ body {
 
   
   
-  <link href="http://blog.jerry-tao.com/index.xml" rel="alternate" type="application/rss+xml" title="Jerry Tao Feed" />
-  
 
   <meta name="generator" content="Hugo 0.31.1" />
   
@@ -388,831 +386,139 @@ body {
 <div class="pure-g">
     <div class="pure-u-1-24 pure-u-md-5-24"></div>
 	<div class="pure-u-11-12 pure-u-md-5-8">
-	<div class="post-content">
-	
-	  <p class="posts-name">Recent posts:</p>
-
-	  <ul class="posts">
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2017/08/08/ruby_process/">Ruby Process</a>
-
-		  <p class="footnote">
-			<time datetime="08-08-2017T00:00:00Z">08-08-2017</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+        <div class="post">
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2017/03/16/cache_cluster_in_ruby_demo/">杂七杂八的缓存</a>
-
-		  <p class="footnote">
-			<time datetime="03-16-2017T20:47:06Z">03-16-2017</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+            <div class="post-title">
+                <p class="footnote">
+                    <time class="">03-06-2015</time>
+		            
+                    
+                    |
+                    
+                    
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2017/03/08/gateway_in_mruby/">实现一个简单的Gateway</a>
-
-		  <p class="footnote">
-			<time datetime="03-08-2017T20:47:06Z">03-08-2017</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+                    
+                    categories: [<a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
+                    
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2017/02/22/rails_routes_2/">Rails Routes 源码(2)</a>
-
-		  <p class="footnote">
-			<time datetime="02-22-2017T20:47:06Z">02-22-2017</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+                    
+                </p>
+                <h1>Angular Best Practices</h1>
+            </div>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2017/02/15/rails_routes_1/">Rails Routes 源码(1)</a>
-
-		  <p class="footnote">
-			<time datetime="02-15-2017T12:47:06Z">02-15-2017</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+            <div class="post-content">
+                
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2017/02/07/load_balance/">Load Balance简介</a>
-
-		  <p class="footnote">
-			<time datetime="02-07-2017T12:47:06Z">02-07-2017</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<p>本文所有内容来源于<a href="http://www.meetup.com/AngularJS-MTV/events/93943412/">http://www.meetup.com/AngularJS-MTV/events/93943412/</a> （我个人仅仅是整理学习一下:D）。</p>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2017/02/03/http2/">HTTP2简介</a>
-
-		  <p class="footnote">
-			<time datetime="02-03-2017T12:47:06Z">02-03-2017</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<p>(本文在我的github上存储，欢迎P/R)</p>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2016/09/09/lazy_hash/">使用延迟加载来优化redis请求</a>
-
-		  <p class="footnote">
-			<time datetime="09-09-2016T12:47:06Z">09-09-2016</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<p>视频地址：<a href="https://www.youtube.com/watch?v=ZhfUv0spHCY">https://www.youtube.com/watch?v=ZhfUv0spHCY</a></p>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2016/09/05/redis_ziplist/">Redis Ziplist总结</a>
-
-		  <p class="footnote">
-			<time datetime="09-05-2016T12:47:06Z">09-05-2016</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<p>slide地址：<a href="http://goo.gl/CD0Is">http://goo.gl/CD0Is</a></p>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2016/03/15/order_no_demo/">高并发订单号池</a>
-
-		  <p class="footnote">
-			<time datetime="03-15-2016T20:47:06Z">03-15-2016</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<p>Version: 1.0.0@15-3-6</p>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2016/01/14/singleton_class_for_dummy/">Singleton Class简明教程</a>
-
-		  <p class="footnote">
-			<time datetime="01-14-2016T14:47:06Z">01-14-2016</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<h2 id="1-建立项目">1. 建立项目</h2>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2016/01/13/ruby_hook_methods/">Ruby Hook Methods</a>
-
-		  <p class="footnote">
-			<time datetime="01-13-2016T14:47:06Z">01-13-2016</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<ul>
+<li>yeoman</li>
+<li>参考<a href="https://github.com/angular/angular-seed">angular-seed</a></li>
+</ul>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2016/01/12/load_code_in_ruby/">Ruby加载代码的二三事</a>
-
-		  <p class="footnote">
-			<time datetime="01-12-2016T14:47:06Z">01-12-2016</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<h2 id="2-加载javascript">2. 加载javascript</h2>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2016/01/11/all_about_const_lookup/">关于Constant查找的一切(译)</a>
-
-		  <p class="footnote">
-			<time datetime="01-11-2016T14:47:06Z">01-11-2016</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<ul>
+<li>在HTML下面使用script标签。</li>
+<li>AMD(requirejs) 如果使用这个你必须在加载完js之后手动设置一下ngApp位置：</li>
+</ul>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/09/29/rails_log_process/">Rails Log Process</a>
-
-		  <p class="footnote">
-			<time datetime="09-29-2015T14:47:06Z">09-29-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<p><a href="https://github.com/angular/angular-seed/blob/master/app/index-async.html#L41">angluar-seed/index-async.html</a></p>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/08/14/move_development_to_docer/">Move Rails Development to Docker</a>
-
-		  <p class="footnote">
-			<time datetime="08-14-2015T14:47:06Z">08-14-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<p>总结：其实大多数angular app都是SPA， 所以一次加载js的方式即可。</p>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/05/06/a_little_piece_code_in_action_controller/">A Little Piece Code in ActionController</a>
-
-		  <p class="footnote">
-			<time datetime="05-06-2015T11:47:06Z">05-06-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<h2 id="3-zen-of-angular">3. Zen Of Angular</h2>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/03/12/active_support_backtrace/">ActiveSupport BacktraceCleaner</a>
-
-		  <p class="footnote">
-			<time datetime="03-12-2015T11:47:06Z">03-12-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<p><strong>内容显示</strong></p>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/03/06/angular_best_practices/">Angular Best Practices</a>
-
-		  <p class="footnote">
-			<time datetime="03-06-2015T11:47:06Z">03-06-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<p>使用{{}}这种方式来显示值会有问题，有些情况下index.html会闪现并且用户会看到{{}}部分。</p>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/03/03/active_support_concern/">ActiveSupport Concern</a>
-
-		  <p class="footnote">
-			<time datetime="03-03-2015T11:47:06Z">03-03-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<p>解决办法：</p>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/02/27/active_support_get_controller_everywhere/">ActiveSupport PerThreadRegistry：Get Controller Everywhere</a>
-
-		  <p class="footnote">
-			<time datetime="02-27-2015T11:47:06Z">02-27-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<ul>
+<li>使用ng-cloak和directive来隐藏{{}}。</li>
+<li>使用ng-bind来代替{{}} 只需要在index.html中使用，动态加载的内容会先预编译再显示，所以没有这个问题。</li>
+</ul>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/02/23/active_support_notifications/">ActiveSupport Notifications</a>
-
-		  <p class="footnote">
-			<time datetime="02-23-2015T11:47:06Z">02-23-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<p><strong>整理js</strong></p>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/02/22/active_support_aliasing/">ActiveSupport Aliasing</a>
-
-		  <p class="footnote">
-			<time datetime="02-22-2015T11:47:06Z">02-22-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<p>缩小和混淆js的时候注意一下页面的变量还有inject是依赖于名称的，最好不要随便修改变量名称。</p>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/02/09/rails_gems_1/">Rails常用Gem</a>
-
-		  <p class="footnote">
-			<time datetime="02-09-2015T11:47:06Z">02-09-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<h3 id="don-t-fight-the-html-extend-it">Don&rsquo;t fight the html, extend it.</h3>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/02/06/rails_test_details_2/">Rails Test Details 2: Model Test</a>
-
-		  <p class="footnote">
-			<time datetime="02-06-2015T11:47:06Z">02-06-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<p><strong>Templates</strong></p>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/02/05/rails_test_details_1/">Rails Test Details 1: Build Data</a>
-
-		  <p class="footnote">
-			<time datetime="02-05-2015T11:47:06Z">02-05-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<p>不支持IE的清空下 <code>&lt;my-directive&gt;</code> 这种带namespace的命名方式是推荐的做法。</p>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/02/04/use_postgresql_uuid_in_rails/">Use Postgresql uuid in Rails</a>
-
-		  <p class="footnote">
-			<time datetime="02-04-2015T11:47:06Z">02-04-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<p>考虑支持IE的情况下 使用<code>&lt;div my-directive&gt;</code>, 这种情况IE可以正常的处理，仅仅使用<code>&lt;my-directive&gt;</code>不可以。</p>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/01/27/active_support_inflector/">ActiveSupport::Inflector</a>
-
-		  <p class="footnote">
-			<time datetime="01-27-2015T11:47:06Z">01-27-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<p>考虑支持验证HTML，还可以再加个前缀<code>&lt;div x-my-directive&gt;</code>或者<code>&lt;div data-my-directive&gt;</code></p>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2014/12/01/i18n_with_rails_and_angular/">I18n with Rails and Angular</a>
-
-		  <p class="footnote">
-			<time datetime="12-01-2014T11:47:06Z">12-01-2014</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<h3 id="separate-presentation-and-business-logic">Separate presentation and business logic.</h3>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2014/02/18/active_support-configurable-in-rails/">ActiveSupport::Configurable</a>
-
-		  <p class="footnote">
-			<time datetime="02-18-2014T11:47:06Z">02-18-2014</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<p><strong>Controllers</strong></p>
 
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2014/02/07/custom-id-with-mongoid-in-rails/">自定义mongoid的model id</a>
-
-		  <p class="footnote">
-			<time datetime="02-07-2014T11:47:06Z">02-07-2014</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2014/01/22/long-weibo/">简单的长微博示例</a>
-
-		  <p class="footnote">
-			<time datetime="01-22-2014T11:47:06Z">01-22-2014</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2014/01/21/wkhtmltoimg-intro/">wkhtmltoimage简介</a>
-
-		  <p class="footnote">
-			<time datetime="01-21-2014T11:47:06Z">01-21-2014</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2014/01/20/ruby-std-lib-open3/">Ruby标准库学习：Open3</a>
-
-		  <p class="footnote">
-			<time datetime="01-20-2014T11:47:06Z">01-20-2014</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-	  </ul>
-	</div>
+<ul>
+<li>不应该包含DOM的引用。</li>
+<li>应该响应View的行为：点击按钮，或者提交表单。</li>
+</ul>
+
+<p><strong>Services</strong></p>
+
+<ul>
+<li>不应该包含DOM的引用。</li>
+<li>行为不应该跟view有关。</li>
+</ul>
+
+<p>所有对DOM的操作应该放进directive，</p>
+
+<p>在这里的核心思想是，controller应该尽可能的简单，仅仅是把其他的东西bind到一起，例如如何在一个controller里调用另一个controller的方法，这种操作应该是service的，而不应该是controller的。</p>
+
+<p><strong>Scopes</strong></p>
+
+<ul>
+<li>$scope 在view里只读</li>
+<li>$scope 在controller里只写</li>
+</ul>
+
+<p>这个很好理解，例如定义一个addTodo 函数在controller里</p>
+
+<pre><code class="language-javascript">$scope.addTodo = function(){ # Do something with $scope.todo}
+
+$scope.addTodo = function(todo){ # Do something with todo}
+</code></pre>
+
+<p>第一个你是直接在view里面对$scope赋值，然后在controller里处理，违反了view里只读和controller里只写的原则。</p>
+
+<p>所以第二种是合适的做法。第二种的优点包括更容易理解，更容易测试，更容易复用等。</p>
+
+<p>还有ng-model在继承scope里的表现很值得注意，因为基本上所有的directive都会创建一个自己的$scope，所以使用ng-model在子model中很可能会创建一个自己的$scope变量，而不是使用父$scope的。</p>
+
+<p>所以，在使用ng-model的时候，永远使用一个&rsquo;.&lsquo;。</p>
+
+<p>eg: <code>&lt;input ng-model='title'&gt;</code> 不正确，应该使用 <code>&lt;input ng-model='post.title'&gt;</code>， 这样可以避免子scope创建自己的title。</p>
+
+<p><strong>modules</strong></p>
+
+<ul>
+<li>根据功能来组织module，而不是type，例如不是把所有的controllers来组织到一个module里。</li>
+<li>根据view来组织module是一个很好的习惯。</li>
+</ul>
+
+<p><strong>PS: Develop with non-minified libraries</strong></p>
+
+            </div>
+        </div>
 	</div>
     <div class="pure-u-1-24 pure-u-md-1-6"></div>
 </div>
@@ -1233,7 +539,7 @@ body {
 
         </ul>
         <a href="#" class="pure-menu-link pull-right" id="gototop-btn">↑↑</a>
-        <a href="http://blog.jerry-tao.com/index.xml" class="pure-menu-link pull-right">RSS</a>
+        <a href="" class="pure-menu-link pull-right">RSS</a>
       </div>
       
       <p id="foot-copyright">(c) 2013 -- 2017</p>

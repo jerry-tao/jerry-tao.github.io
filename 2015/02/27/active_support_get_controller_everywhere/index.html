@@ -3,8 +3,8 @@
 <head>
   
   <meta charset="utf-8">
-  <title>Jerry Tao</title>
-  <meta name="description" content="Jerry Tao">
+  <title>ActiveSupport PerThreadRegistry：Get Controller Everywhere</title>
+  <meta name="description" content="ActiveSupport PerThreadRegistry：Get Controller Everywhere">
   <meta name="author" content="">
   
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -336,8 +336,6 @@ body {
 
   
   
-  <link href="http://blog.jerry-tao.com/index.xml" rel="alternate" type="application/rss+xml" title="Jerry Tao Feed" />
-  
 
   <meta name="generator" content="Hugo 0.31.1" />
   
@@ -388,831 +386,107 @@ body {
 <div class="pure-g">
     <div class="pure-u-1-24 pure-u-md-5-24"></div>
 	<div class="pure-u-11-12 pure-u-md-5-8">
-	<div class="post-content">
-	
-	  <p class="posts-name">Recent posts:</p>
+        <div class="post">
 
-	  <ul class="posts">
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2017/08/08/ruby_process/">Ruby Process</a>
+            <div class="post-title">
+                <p class="footnote">
+                    <time class="">02-27-2015</time>
+		            
+                    
+                    |
+                    
+                    
 
-		  <p class="footnote">
-			<time datetime="08-08-2017T00:00:00Z">08-08-2017</time>
+                    
+                    categories: [<a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
+                    
 
-			
-		  |	
-			
+                    
+                </p>
+                <h1>ActiveSupport PerThreadRegistry：Get Controller Everywhere</h1>
+            </div>
 
-			
+            <div class="post-content">
+                
 
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+<p>经常看到这样的问题 &lsquo;How can i get current_user/controller/action/request in models?&lsquo;。并且这种问题的解决方案一般来说都很一致：存进Thread.current[]里。</p>
 
-			
+<p>(虽然我个人并不喜欢这种做法，不过很多时候这样做确实很简单，并且说实话我并没有找到更好的办法，what happend in controller, should stay in controller.)</p>
 
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2017/03/16/cache_cluster_in_ruby_demo/">杂七杂八的缓存</a>
+<p>然后我们看一下使用PerThreadRegistry来存储的方法。本质上来说，存储的地方仍然是Thread.current[], 只是封装了一下然后加了一个namespace。</p>
 
-		  <p class="footnote">
-			<time datetime="03-16-2017T20:47:06Z">03-16-2017</time>
+<h2 id="使用">使用</h2>
 
-			
-		  |	
-			
+<p>先看一个简单的用法：</p>
 
-			
+<pre><code class="language-ruby">class DemoRegistry
+  extend ActiveSupport::PerThreadRegistry
 
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+  attr_accessor :user
+end
 
-			
+DemoRegistry.user = 'Jerry'
+DemoRegistry.user
+#=&gt;'Jerry'
+Thread.current['DemoRegistry'].user == DemoRegistry.user
+#=&gt; true
+</code></pre>
 
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2017/03/08/gateway_in_mruby/">实现一个简单的Gateway</a>
+<p>到这里其实很明显如何把current_name之类的变量存储在thread里了。</p>
 
-		  <p class="footnote">
-			<time datetime="03-08-2017T20:47:06Z">03-08-2017</time>
+<p>看一下存储current_user的例子：</p>
 
-			
-		  |	
-			
+<pre><code class="language-ruby">class PostsController &lt; ApplicationController
+  before_action :set_current_user
 
-			
+  private
 
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+  def set_current_user
+    UserRegistry.user = current_user
+  end
+end
 
-			
+class Post&lt;ActiveRecord::Base
+  after_save :set_user
+  def set_user
+    UserRegistry.user #这里就能取出来了
+  end
+end
+</code></pre>
 
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2017/02/22/rails_routes_2/">Rails Routes 源码(2)</a>
+<h2 id="源码">源码</h2>
 
-		  <p class="footnote">
-			<time datetime="02-22-2017T20:47:06Z">02-22-2017</time>
+<pre><code class="language-ruby">module PerThreadRegistry
+  def self.extended(object)
+    object.instance_variable_set '@per_thread_registry_key', object.name.freeze # 用object的名字做namespace
+  end
 
-			
-		  |	
-			
+  def instance
+    Thread.current[@per_thread_registry_key] ||= new # 在一个线程内单例
+  end
 
-			
+  protected
+  def method_missing(name, *args, &amp;block) # :nodoc:
+    # Caches the method definition as a singleton method of the receiver.
+    define_singleton_method(name) do |*a, &amp;b|
+      instance.public_send(name, *a, &amp;b) # 调用instance的mehtod
+    end
 
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
+    send(name, *args, &amp;block)
+  end
+end
+</code></pre>
 
-			
+<h2 id="补充">补充</h2>
 
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2017/02/15/rails_routes_1/">Rails Routes 源码(1)</a>
+<p>个人并不喜欢通过这种做法来存储对应的内容，不过貌似如果想在model里得到这些内容也只有传参和存储在Thread两种方法。所以如果想做到what happend in controller, should stay in controller. 就不得不把部分逻辑挪到controller里。</p>
 
-		  <p class="footnote">
-			<time datetime="02-15-2017T12:47:06Z">02-15-2017</time>
+<p>不过有一点还是OK的，实际上当你存储controller在Thread里，你只存储了一个引用，并没有复制一个controller，所在资源上应该还可以接受。</p>
 
-			
-		  |	
-			
+<!--关于使用完成之后，是否需要'清空' 这个Namespace，这个需要看两点，如果是线程池的话，那么你可能需有手动清空一下，否则如果没有新建线程那这个变量会存留知道下次使用，如果不是线程池（貌似rails没有使用线程池），那么不需要手动清空。-->
 
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2017/02/07/load_balance/">Load Balance简介</a>
-
-		  <p class="footnote">
-			<time datetime="02-07-2017T12:47:06Z">02-07-2017</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2017/02/03/http2/">HTTP2简介</a>
-
-		  <p class="footnote">
-			<time datetime="02-03-2017T12:47:06Z">02-03-2017</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2016/09/09/lazy_hash/">使用延迟加载来优化redis请求</a>
-
-		  <p class="footnote">
-			<time datetime="09-09-2016T12:47:06Z">09-09-2016</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2016/09/05/redis_ziplist/">Redis Ziplist总结</a>
-
-		  <p class="footnote">
-			<time datetime="09-05-2016T12:47:06Z">09-05-2016</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2016/03/15/order_no_demo/">高并发订单号池</a>
-
-		  <p class="footnote">
-			<time datetime="03-15-2016T20:47:06Z">03-15-2016</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2016/01/14/singleton_class_for_dummy/">Singleton Class简明教程</a>
-
-		  <p class="footnote">
-			<time datetime="01-14-2016T14:47:06Z">01-14-2016</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2016/01/13/ruby_hook_methods/">Ruby Hook Methods</a>
-
-		  <p class="footnote">
-			<time datetime="01-13-2016T14:47:06Z">01-13-2016</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2016/01/12/load_code_in_ruby/">Ruby加载代码的二三事</a>
-
-		  <p class="footnote">
-			<time datetime="01-12-2016T14:47:06Z">01-12-2016</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2016/01/11/all_about_const_lookup/">关于Constant查找的一切(译)</a>
-
-		  <p class="footnote">
-			<time datetime="01-11-2016T14:47:06Z">01-11-2016</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/09/29/rails_log_process/">Rails Log Process</a>
-
-		  <p class="footnote">
-			<time datetime="09-29-2015T14:47:06Z">09-29-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/08/14/move_development_to_docer/">Move Rails Development to Docker</a>
-
-		  <p class="footnote">
-			<time datetime="08-14-2015T14:47:06Z">08-14-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/05/06/a_little_piece_code_in_action_controller/">A Little Piece Code in ActionController</a>
-
-		  <p class="footnote">
-			<time datetime="05-06-2015T11:47:06Z">05-06-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/03/12/active_support_backtrace/">ActiveSupport BacktraceCleaner</a>
-
-		  <p class="footnote">
-			<time datetime="03-12-2015T11:47:06Z">03-12-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/03/06/angular_best_practices/">Angular Best Practices</a>
-
-		  <p class="footnote">
-			<time datetime="03-06-2015T11:47:06Z">03-06-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/03/03/active_support_concern/">ActiveSupport Concern</a>
-
-		  <p class="footnote">
-			<time datetime="03-03-2015T11:47:06Z">03-03-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/02/27/active_support_get_controller_everywhere/">ActiveSupport PerThreadRegistry：Get Controller Everywhere</a>
-
-		  <p class="footnote">
-			<time datetime="02-27-2015T11:47:06Z">02-27-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/02/23/active_support_notifications/">ActiveSupport Notifications</a>
-
-		  <p class="footnote">
-			<time datetime="02-23-2015T11:47:06Z">02-23-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/02/22/active_support_aliasing/">ActiveSupport Aliasing</a>
-
-		  <p class="footnote">
-			<time datetime="02-22-2015T11:47:06Z">02-22-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/02/09/rails_gems_1/">Rails常用Gem</a>
-
-		  <p class="footnote">
-			<time datetime="02-09-2015T11:47:06Z">02-09-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/02/06/rails_test_details_2/">Rails Test Details 2: Model Test</a>
-
-		  <p class="footnote">
-			<time datetime="02-06-2015T11:47:06Z">02-06-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/02/05/rails_test_details_1/">Rails Test Details 1: Build Data</a>
-
-		  <p class="footnote">
-			<time datetime="02-05-2015T11:47:06Z">02-05-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/02/04/use_postgresql_uuid_in_rails/">Use Postgresql uuid in Rails</a>
-
-		  <p class="footnote">
-			<time datetime="02-04-2015T11:47:06Z">02-04-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/01/27/active_support_inflector/">ActiveSupport::Inflector</a>
-
-		  <p class="footnote">
-			<time datetime="01-27-2015T11:47:06Z">01-27-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2014/12/01/i18n_with_rails_and_angular/">I18n with Rails and Angular</a>
-
-		  <p class="footnote">
-			<time datetime="12-01-2014T11:47:06Z">12-01-2014</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2014/02/18/active_support-configurable-in-rails/">ActiveSupport::Configurable</a>
-
-		  <p class="footnote">
-			<time datetime="02-18-2014T11:47:06Z">02-18-2014</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2014/02/07/custom-id-with-mongoid-in-rails/">自定义mongoid的model id</a>
-
-		  <p class="footnote">
-			<time datetime="02-07-2014T11:47:06Z">02-07-2014</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2014/01/22/long-weibo/">简单的长微博示例</a>
-
-		  <p class="footnote">
-			<time datetime="01-22-2014T11:47:06Z">01-22-2014</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2014/01/21/wkhtmltoimg-intro/">wkhtmltoimage简介</a>
-
-		  <p class="footnote">
-			<time datetime="01-21-2014T11:47:06Z">01-21-2014</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2014/01/20/ruby-std-lib-open3/">Ruby标准库学习：Open3</a>
-
-		  <p class="footnote">
-			<time datetime="01-20-2014T11:47:06Z">01-20-2014</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-	  </ul>
-	</div>
+            </div>
+        </div>
 	</div>
     <div class="pure-u-1-24 pure-u-md-1-6"></div>
 </div>
@@ -1233,7 +507,7 @@ body {
 
         </ul>
         <a href="#" class="pure-menu-link pull-right" id="gototop-btn">↑↑</a>
-        <a href="http://blog.jerry-tao.com/index.xml" class="pure-menu-link pull-right">RSS</a>
+        <a href="" class="pure-menu-link pull-right">RSS</a>
       </div>
       
       <p id="foot-copyright">(c) 2013 -- 2017</p>

@@ -1,0 +1,654 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Jerry Tao</title>
+    <link>http://blog.jerry-tao.com/</link>
+    <description>Recent content on Jerry Tao</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-CN</language>
+    <copyright>(c) 2013 -- 2017</copyright>
+    <lastBuildDate>Tue, 08 Aug 2017 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="http://blog.jerry-tao.com/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Ruby Process</title>
+      <link>http://blog.jerry-tao.com/2017/08/08/ruby_process/</link>
+      <pubDate>Tue, 08 Aug 2017 00:00:00 +0000</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2017/08/08/ruby_process/</guid>
+      <description>基本上来说，在linux平台下，各个语言的进程操作都差不多，区别主要是写法和封装的程度，底层调用都是一样的，所以其实如果了解Linux的进程基本就足够了。
+启动和终结 启动一个进程有两个接口，exec和fork，前者会用新的进程来替代当前进程，后者会以当前进程为父进程创建一个新的子进程，并且会继承当前进程的内存空间和文件描述符。
+新启动的进程默认的前三个文件描述符012就是stdin，stdout和stderr。
+exec会启动另外一个进程来取代当前进程 一旦启动，唯一不变的就是pid ppid user group 代码段换新，废弃原有数据段和堆栈段，重新分配。pending的信号会被舍弃，正在捕获的信号会使用默认的处理，自定义的丢失，内存lock会舍弃。thread属性会返回默认值，进程统计信息重置。atexit等东西会被清除。
+exec [&#39;ls&#39;, &#39;-l&#39;] puts &#39;hello&#39; # 不会被执行，exec之后进程就已经被替换成新的了  exec接受的参数可以是字符串或者数组，数组会直接运行另一个进程，字符串会新建一个新的session，一般没必要使用数组即可。
+fork基本上是复制当前进程到一个新的进程，会继承当前的内存和文件描述符。
+这里已经可以看到fork有些问题，首先是如果每fork一个进程就复制一份内存这个开销很大而且没有必要，所以现在的fork基本都支持CoW，只有当修改的时候才复制对应内存，否则不会复制对应内存。
+另一个问题是，已经提到过，只有exec和fork两种启动进程的方式，那么我们当前进程，比如说正在运行的一个rb文件，想启动另外一个进程的话就需要先fork一个进程，然后用fork出来的进程执行exec，那么其实并没有必要跟这个子进程共享内存，虽然是CoW，但是还是要有一些开销的，所以还有另一个posix-spawn的方法，这个只会继承文件描述符，而不会继承内存，ruby里需要额外加载posix-spawn gem来实现。
+if fork puts &#39;In parent #{Process.pid}&#39; else puts &#39;In child #{Process.pid}&#39; end # 以block方式运行fork fork do puts &amp;quot;In child&amp;quot; end  上面是fork的代码，因为在父进程中执行fork会返回fork出来进程的pid，所以if里面的代码会在parent进程里执行，else里的代码会在子进程里执行。
+终结当前进程有很多方法，我们常见的就是代码执行完毕正常退出，这种代码其实默认会执行一个exit返回0。
+所以可以在任何地方执行exit来退出当前进程，并且可以指定一个退出值，exit 22。
+另外还可以加一段回调操作：
+at_exit { puts &amp;quot;Shutdown...&amp;quot; } exit  同时可以使用abort，abort跟exit的主要区别是abort的默认退出值是1。
+还有一个退出是exit!，这个退出默认退出值是1，同时不会执行at_exit回调。
+还有一种情况就是运行过程中发生了异常并且没有进行捕捉，也会直接导致进程以非0退出。
+然后来看下终结一个fork出去的子进程，在Linux下，结束一个进程会发一个SIGCHLD信号给父进程，如果父进程没有处理，那这个信号会遗留在系统内核里成为僵尸进程。
+还有另一个点就是，如果父进程先于子进程结束了，那么子进程的父进程会变为init(1)，之后由init来处理子进程结束的信号。
+fork do sleep 10 puts &amp;quot;Child end&amp;quot; end Process.</description>
+    </item>
+    
+    <item>
+      <title>杂七杂八的缓存</title>
+      <link>http://blog.jerry-tao.com/2017/03/16/cache_cluster_in_ruby_demo/</link>
+      <pubDate>Thu, 16 Mar 2017 20:47:06 +0000</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2017/03/16/cache_cluster_in_ruby_demo/</guid>
+      <description>1. 缓存 缓存已经是常见的技术了，甚至可以说是必备的技术，缓存基本有两种主要的使用场景：
+ 作为数据库的快速读缓冲  把常用的数据存储在缓存里用来加快响应速度，一般来说这种数据只是对RDBMS做一个镜像，当缓存中没有的时候我们还可以去db里获取原始内容。
+ 作为传递数据的中介/存储一些可容忍丢失的数据  比如我们常用的sidekiq，就是用redis来存储任务的相关信息的。还有经常用来存储session，这种数据在一定程度上是允许不那么精确的。
+注：缓存是一种unreliable的存储，这是在使用缓存的任何阶段都要明确的，以sidekiq为例，你不应该简单的数据添加进redis就不管了，应该确保redis给你明确返回了&amp;rdquo;OK&amp;rdquo;，不过即使redis返回了OK，如果在sidekiq读取之前崩溃了，相关数据并没有持久化依旧会导致任务的丢失，所以在作为传递数据使用缓存时需要确保后续的检查以及足够的retry机制。
+2. 指标 我们往往会从下面三方面来评价一个缓存的使用情况：
+ 命中率 一致性 idletime  命中率是很重要的一点，例如我们有100个请求，其中只有20个命中了缓存，而其他的全部从数据库读取，这样我们的命中率就只有20%，不过让命中率达到100%是没有必要的，根据8：2原则，基本上80%左右就可以接受了。在redis的info命令keyspace_hits和keyspace_misses分别记录了访问命中和misses的数量。
+一致性往往是被忽视的一点，很多人的习惯是先更新数据库后更新缓存，这种情况很容易导致缓存的数据已经过期了。
+idletime是指我们把这个数据放入缓存中有多久没有使用过，在redis里可以通过OBJECT idletime key来检查。定期的清理一些idle key可以减少对硬件资源的占用。
+注：redis的默认的达到最大使用内存是报错，可以通过设置来根据LRU消除还没有到期的key，这种配置也适用于减少idle key。
+注：redis的info命令是并不是持久化的，也就是说记录的数据都是从启动至今为止的，如果你刚刚重启过redis，是无法得到info相关的信息的。
+3. 集群基础 注：redis的多db理论上是用来解决key冲突的，特别是当你有不同的应用share同一个redis的时候可以更方便的对各自的信息进行管理，不过也要认识到，多个db并不会对读写性能有任何提升，如果在硬件资源允许的情况下，多个进程的解决方案要优于多db，同时很重要的事情是，有些redis集群方案是不支持多db的。
+缓存的集群相对app来说稍微复杂了一点，不过其实核心问题主要是解决把哪个key放到哪个节点上，以及在节点有增删时对命中率和负载是否均衡的影响。
+常见的就是通过key的hash值来取模，用来判断这个key应该放在哪个节点之上。例如我们现在有4个node：[c1,c2,c3,c4]，
+&amp;quot;hello&amp;quot;.hash%4 =&amp;gt; 3  这样就可以把hello放在c3上，不过这种简单取模的缺点也是很明显的，伸缩性非常不好。
+假设我们现在有1w个key平均分散在4个节点之上，假设hash是从0~9999，当我们追加一个节点变成[c1,c2,c3,c4,c5]的时候，基本上只剩下20%的数据可以命中，而其他的80%都需要重建了。
+所以更常见的做法是先虚拟出一定数量的节点，例如虚拟100个节点，然后对100取模，把10000个key依旧平均放在4个真实节点上。
+这样当我们追加一个节点的时候，依旧能保持50%的命中率。
+再进一步，如果我们把追加的节点放到中间，变成[c1,c2,c5,c3,c4]，这种情况下可以达到70%的命中率。所以我们可以把所有节点模拟成一个环（一致性hash算法），这样动态伸缩的时候基本都能维持70%的命中率。
+环只是一个模拟的概念，可以进一步改进为使用虚拟节点+哈希表的实现，再增删节点的时候把虚拟节点平均分散到其他的节点之上。这样命中率可以保证在原节点数/新节点数。
+一致性hash的缺点主要体现在复杂度上，需要O(N)的复杂度来查找节点。
+解决了key的问题之后我们可以有两种方式来实现这个效果，一种是作为lib提供到各个使用redis的项目内，一种是在中间开发一个代理服务。
+这两种方法各有各的优点，第一种的好处是你不需要一个额外的服务作为数据的中转，缺点是当面对动态的增删你可能需要做更多额外的工作，第二种的好处是所有的数据都经过一个中转便于统计和统一管理配置，缺点跟其他的代理服务器一样，代理服务器的性能可能成为整体的短板。
+注：一致性Hash是比较常用的分布式策略之一，常使用的场景就是缓存集群。
+4. 简单实现 下面是实现一个简单的缓存集群的两个要点
+ 实现redis接口层 实现节点查找层  关于redis的接口层可以参考 《Redis的设计与实现》，下面是用ruby实现的一个模拟缓存集群的工作方式：
+# 模拟一个Redis服务 class Redis attr_accessor :values def initialize(ip) @values = {} end def set(key, value) @values[key] = value end def get(key, value) @values[key] end end # 虚拟节点 class VNode attr_accessor :node def execute(*params) node.</description>
+    </item>
+    
+    <item>
+      <title>实现一个简单的Gateway</title>
+      <link>http://blog.jerry-tao.com/2017/03/08/gateway_in_mruby/</link>
+      <pubDate>Wed, 08 Mar 2017 20:47:06 +0000</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2017/03/08/gateway_in_mruby/</guid>
+      <description>Gateway是复杂系统中常见的基础组成部分，可以理解为一个包含简单逻辑的反向代理，例如https://github.com/hellofresh/janus，一般大体位置如图：
+这其中可能还包含权限认证以及服务管理，api version，api scope的权限等。接下来基于mruby介绍下各部分的简单实现。
+1. 认证部分 在我们的系统内存在一个认证服务，认证通过之后则会返回给前台一个JWT token，之后通过JWT token来实现权限认证。
+之所以选择JWT是因为JWT是一个自包含信息的结构，在简单场景下不需要再次与数据库或者缓存沟通就可以完成验证。
+# 认证服务 if user = User.resolve(username,password) payload = {auth: true, uid: user.id, admin: user.admin} return {auth: true, token: JWT.encode(payload,JWT_KEY,&#39;HS256&#39;)} else reuturn {auth: false} end  在这里的JWT_KEY是保证安全的关键，一定要妥善保存好，并且JWT有一些预留字段，例如过期时间等，也非常适合实现更复杂的认证模式。
+mruby的JWT解析选择的是https://github.com/prevs-io/mruby-jwt (这个只支持HS256的签名,而且目测作者也不会更新了）。
+# 验证部分 # Nginx Config mruby_access_handler access_control.rb; # access_control.rb begin request = Nginx::Request.new key = request.headers_in[&amp;quot;Authorization&amp;quot;] payload = JWT.decode(key,JWT_KEY,&amp;quot;HS512&amp;quot;)[0] if request.method!=&amp;quot;OPTIONS&amp;quot; &amp;amp;&amp;amp; !payload[&#39;auth&#39;] Nginx::Request.new.headers_out[&amp;quot;access-control-allow-origin&amp;quot;] = &amp;quot;*&amp;quot; Nginx.return Nginx::HTTP_UNAUTHORIZED else request.headers_in[&amp;quot;UID&amp;quot;] = payload[&#39;uid&#39;] end rescue Nginx::Request.</description>
+    </item>
+    
+    <item>
+      <title>Rails Routes 源码(2)</title>
+      <link>http://blog.jerry-tao.com/2017/02/22/rails_routes_2/</link>
+      <pubDate>Wed, 22 Feb 2017 20:47:06 +0000</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2017/02/22/rails_routes_2/</guid>
+      <description>这篇文章会详细的介绍定义路由的细节。
+1. match细节 前面说的match只是个缩略的伪代码，实际上真正的match也只是个处理参数继续传递给map_match，并进一步传递给Mapping#add_route方法，
+在这一步中重点的有这样几步：
+def add_route(options) ast = Journey::Parser.parse path mapping = Mapping.build(@scope, @set, ast, controller, default_action, to, via, formatted, options_constraints, anchor, options) @set.add_route(mapping, ast, as, anchor) end  第一步用来为当前路径生成AST（在查找的时候会详细说），第二部则是构建一个Mapping对象作为参数传递，第三步则是返回已经处理好的结果,传递给RouteSet#add_route。
+route = @set.add_route(name, mapping)  然后继续添加给对应的Journey::Routes#add_route:
+def add_route(name, mapping) route = mapping.make_route name, routes.length routes &amp;lt;&amp;lt; route partition_route(route) clear_cache! route end  make_route方法是来自于Mapping#make_route，继续处理了参数并生成Journey::Route对象
+def make_route(name, precedence) route = Journey::Route.new(name, application, path, conditions, required_defaults, defaults, request_method, precedence, @internal) route end  可以理解为，所有的路由规则最终都是以Journey::Route对象保存在Journey::Routes中的。在介绍匹配的时候会详细介绍。</description>
+    </item>
+    
+    <item>
+      <title>Rails Routes 源码(1)</title>
+      <link>http://blog.jerry-tao.com/2017/02/15/rails_routes_1/</link>
+      <pubDate>Wed, 15 Feb 2017 12:47:06 +0000</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2017/02/15/rails_routes_1/</guid>
+      <description>Rails的routes的所有源码所在位置都在：
+ActionPack =&amp;gt; ActionDispatch
+ActionDispatch这个模块就是负责用来处理HTTP相关以及跟rack一起使用的模块，可以分为下面四个部分：
+ HTTP支持 Rack Middlewares 定义路由部分 匹配路由部分  这篇文章先从整体简单介绍路由从定义到匹配的流程。
+1. 定义路由 我们写路由的时候基本都是写在config/routes.rb里的，最简单的大概如下：
+Rails.application.routes.draw do match &#39;posts&#39;, to: &#39;posts#index&#39;, via: :get end  这里的routes是一个RouteSet的实例，在初始化RouteSet的时候就会初始化几个变量：
+def initialize @set = Journey::Routes.new @router = Journey::Router.new @set end  直接看draw的方法大概可以抽象如下：
+def draw(block) Mapper.new(self).instance_exec(block) end  把整个block交给mapper去执行，在mapper里的方法大概如下：
+class Mapper def initialize(set) @set = set end def match(*argv) @set.add_route(Mapping.build(argv)) end end  在这里把路由都统一处理成mapping对象插入回RouteSet，
+def add_route(mapping) @set.add_route(mapping) end  在Journey::Routes中的add_route方法大概如下：
+def add_route(mapping) @routes &amp;lt;&amp;lt; Journey::Route.</description>
+    </item>
+    
+    <item>
+      <title>Load Balance简介</title>
+      <link>http://blog.jerry-tao.com/2017/02/07/load_balance/</link>
+      <pubDate>Tue, 07 Feb 2017 12:47:06 +0000</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2017/02/07/load_balance/</guid>
+      <description>简单记录下Load Balance的基础知识。
+1. Load Balance方法 HTTP反向代理负载均衡
+这是我们最常见的一种，就是使用Nginx类的服务器在HTTP层面对后台应用服务器进行反向代理。
+优点：重点是简单，而且足以满足一般应用，所以实际上我们接触的比较多。
+缺点：主要是性能上会有压力，反向代理服务器本身的并发和吞吐能力都是有限的。
+HTTP重定向负载均衡
+请求服务器，由服务器计算合适的新的服务器用302重定向返回。
+这种代理方式缺点有很多，一次请求变成两次，而且用来重定向的服务器也需要来计算返回，并且不利于SEO的收集。
+DNS负载均衡
+这个一般在大型网站或者CDN服务提供商那里比较常见，主要是根据用户的IP就近指向的最近的机房IP。
+优点：解决由机房物理距离过远带来的延迟。
+缺点：成本高，DNS有缓存，IP变化很危险。
+TCP负载均衡
+反向代理主要是发生在HTTP层的中间代理，可以把这个转发过程下降到TCP，这一层的典型代表应该是HAProxy了。
+优点：除了由应用层下降到TCP层带来的性能优势之外，对IP数据包进行转发还有一个优势是除了HTTP协议还可以对其他协议进行负载均衡，例如数据库连接，redis连接这种。
+缺点：实际上本质问题和HTTP反向代理是一样的，那就是说所有的流量都会经过代理服务器，对代理服务器还是有一定的要求的。
+链路层负载均衡
+这个是又下降了，按OSI模型来说应该是第二层的协议，主流代表是LVS。这个的模型跟其他的模型有些不一样，其他的请求和返回的流量都要经过中间的代理服务器。而这个只有请求的流量会经过代理服务器，返回的流量可以直接返回到客户端。
+优点：性能基本是几种方案里面最好的。
+缺点：过于底层实际上对使用人员有一定的要求的，例如Nginx的反向代理基本上不需要掌握太多的网络知识，如果想使用LVS可能要多了解一些相关内容。
+2. Load Balance算法 轮询
+轮询就是从上到下依次派发请求，而且由基本的轮询还衍生出一种加权轮询。以nginx为例：
+例如IP为101的机器性能比较好，可以把更多的请求分配到101上。
+# 轮询 upstream app { server 192.168.1.101; server 192.168.1.102; server 192.168.1.103; } # 加权轮询 upstream app { server 192.168.1.101 weight=3; server 192.168.1.102; server 192.168.1.103; }  在上面的加权轮询过程中 如果有6个请求会依照101，101，101，102，103的顺序派发。
+最少连接
+根据后端服务器连接数最少进行选择，还是以nginx为例：
+upstream app { least_conn; server 192.168.1.101; server 192.168.1.102; server 192.</description>
+    </item>
+    
+    <item>
+      <title>HTTP2简介</title>
+      <link>http://blog.jerry-tao.com/2017/02/03/http2/</link>
+      <pubDate>Fri, 03 Feb 2017 12:47:06 +0000</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2017/02/03/http2/</guid>
+      <description> 只是简单记录下对HTTP2的学习。
+1. HTTP1.x 在介绍HTTP2之前，还是要简单回顾下HTTP1/1.x。
+当我们打开一个页面的时候，可能会请求很多个其他资源，包括js，css，图片等，在HTTP1.x的模型下，不开启特殊优化的情况下每个请求都会新建一个TCP连接来访问数据。
+这就跟多线程模型一样，虽然并行同时处理的更多，不过对资源的消耗也更大，所以一般来说浏览器都会有一个对同一个域名的并发数的限制，一般也就是4~10左右。
+有很多优化方案都是用来解决这个问题的，比如常见的keep-alive，keep-alive允许对同一个TCP连接进行复用，避免每个请求都新建TCP连接。
+除了并发限制之外，还有一个很大的问题是HTTP1.x协议是不支持对Header进行压缩的，比如我们常用来存储用户session ID的cookies，如果是同一个域名每次请求都会带上，不管有没有必要，对于小一点的网站来说不算什么，对于流量大的网站来说这个带宽消耗也是值得关注的。
+同样对于这个也有很多现成的解决方案，比如我们很多时候都会把静态资源单独的放到一个域名下面，这样既可以避免header携带不必要的cookies信息也可以通过不同域名来规避浏览器的并发限制。
+2. HTTP2 HTTP2在一定程度上解决了上面的问题，HTTP2的关键词可以总结为下面几点：
+ 二进制传输 多路复用 Header压缩 Server Push  2.1 二进制传输 &amp;amp; 多路复用 HTTP1.x的所有内容都是采取文本形式传输的，而到了HTTP2的则采用了二进制传输，这样解析起来会比文本更加高效，同时简化了多路复用的实现。
+多路复用可以说是HTTP2 vs HTTP1.x 最质变的一个特性了，这个的核心主要就是只使用一个TCP连接来进行并行传输，对传输的数据进行二进制打包，通过stream id来区分不同的请求。
+这个特性在一个页面有如几百张图片这种非常多的请求时候效果非常明显，虽然keep-alive这种东西也可以实现单TCP连接传输，但是keep-alive并不是一种并发的传输方式，keep-alive只是简单的对一个TCP连接进行复用，传输方式依然是A-&amp;gt;B-&amp;gt;C，如果遇见一个特别大的B依然会阻塞C。而stream是单TCP连接进行并发传输，不会出现一个大文件阻塞其他请求的情况。
+在HTTP1.x的时候我们有很多优化方式其实就是为了解决连接数过多的问题的，比如css和js打包，把多张图片组合成一张图片通过css来选取位置，使用多个域名来规避并发限制，这些“打包”做法有些时候其实并不是很友好，比如我们一个1mb的js，只改了一行就需要重新缓存整个js，而在http2的协议下我们可以不打包资源文件，这样可以更高效的利用缓存机制。
+2.2 Header压缩 HTTP2可以采用hpack对header进行压缩了，hpack不仅仅是简单的对数据进行压缩，同时还会维护一张保存重复信息的hash表，来减少重复信息的发送，诸如user-agent，cookies这种信息都会只发送一次了。
+2.3 Server Push Server Push这个东西的原理大概是这样，比如客户请求了index.html, index.html内会请求style.css，在请求index.html的时候实际上我们就已经知道客户会请求style.css，我们可以在客户发送请求style.css之前就push过去。
+这个对各种SPA应用还是很实用的，不过目前还没有很好的最佳实践，具体是否使用可能还有待参考。
+简单总结下，http2已经可以投入使用了，很多网站应该已经升级到http2了，不过使用的时候还是要注意一些问题，比如有一些老的浏览器并不支持http2，对于这种浏览器可能还是要打包资源，同时HTTP2基本只应该使用https协议来传输，http协议可能还有些问题。
+References:  HTTP2 官网（含HTTP2和hpack的RFC） https://http2.github.io/ HTTP2 多路复用详解 http://www.blogjava.net/yongboy/archive/2015/03/19/423611.aspx  </description>
+    </item>
+    
+    <item>
+      <title>使用延迟加载来优化redis请求</title>
+      <link>http://blog.jerry-tao.com/2016/09/09/lazy_hash/</link>
+      <pubDate>Fri, 09 Sep 2016 12:47:06 +0000</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2016/09/09/lazy_hash/</guid>
+      <description>Background 我们系统允许客户自己对页面进行编辑，基于liquid实现的，提供了一大堆变量以供在页面上显示。
+因为不确定客户会使用哪些变量，所以在渲染liquid之前就要把提供的对象都从redis里面提取出来准备好，但实际上也许只使用了其中一部分的一部分。而且由于每个页面都需要加载所有变量，对redis来说非常不友好（通信量过大）。
+Round 1 一开始的思路是查看liquid用了哪些变量，然后只提取使用的变量，但是这样有两个问题：
+ 不得不提前解析一次liquid，性能影响很大。 除了liquid本身的语法，我们还自定义了一些其他的用法，还有页面之间的include，解析难度也比较大。  放弃。
+Round 2 仔细研究了一下liquid的render，实际上对变量的读取就是通过hash的key来实现的，并且通过测试修改hash.[]方法就可以做到自由控制变量的入口了。
+所以改成了以lazy_hash的形式来读取redis，需要什么取什么。
+class LazyHash &amp;lt; Hash attr_accessor :default_key def initialize(key) default_key = key end def [](key) result = super(key) return result if result!=nil result = $redis.hget(default_key, key) self.[]=(key, result) end end  改动后可以达到需要key才去redis里面读，多次使用同一个key不需要每次都去读的效果。
+Round 3 但是在实际中发现liquid并没有渲染，binding进liquid发现liquid会使用key?对hash先判断一下key是否存在。于是继续修改如下
+# 追加方法 def key?(key) self.[](key) != nil end  到此基本已经达到目的了，不过还有一个小问题。
+Round 4 那就是用户在编辑liquid的时候可能为了测试会直接输出对象，例如：
+{ global_setting } { global_setting | json }  为了应对这种情况还是要提供一些load!</description>
+    </item>
+    
+    <item>
+      <title>Redis Ziplist总结</title>
+      <link>http://blog.jerry-tao.com/2016/09/05/redis_ziplist/</link>
+      <pubDate>Mon, 05 Sep 2016 12:47:06 +0000</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2016/09/05/redis_ziplist/</guid>
+      <description>对redis的ziplist做个总结。
+先说结论：在合理配置下，ziplist可以大幅度减少redis的内存占用，并且几乎不影响性能。
+下面是正文。
+ziplist其实是通过把短结构压缩在一起来达到节省内存的做法。
+以我们常用的LIST结构为例：
+实际上在Redis内部LIST的定义是一个双向链表：
+typedef struct list { listNode *head; listNode *tail; unsigned long len; } list; typedef struct listNode { struct listNode *prev; struct listNode *next; void *value; } listNode;  对于一个长度为3的List来说，包含一个list对象和三个listNode对象。
+对于每个node来说，存储了三个指针，prev，next和value，一个指针占4个字节。
+其中value就是一个标准的STS对象。内存包含了长度，空余长度，真实字符串+\0
+以一个节点&amp;rsquo;abc&amp;rsquo;来说，真实字节是3bytes，而一个节点需要额外占用21bytes（三个指针，两个int，一个\0）的内存，总占用就是3+21=24bytes。
+而对于ziplist来说，采用的是类似数组的结构，结构如下：
+&amp;lt;zlbytes&amp;gt;&amp;lt;zltail&amp;gt;&amp;lt;zllen&amp;gt;&amp;lt;entry&amp;gt;&amp;lt;entry&amp;gt;&amp;lt;zlend&amp;gt;  其中entry可以简单分为三部分，前一个entry的长度，还有自己的encoding，自己的内容。
+而对于前一个entry的长度来说，只要长度不超过255都只占一个bytes，如果超过255则都占5bytes（这就是为什么使用ziplist只适合短结构）
+同样以&amp;rsquo;abc&amp;rsquo;为例，假设前面元素长度是5，则abc这个entry的总长度是3+2=5bytes。
+上面的例子可以看到对内存使用的影响，然后看一下对性能的影响。
+相对于链式结构来说，顺序结构本来应该有更快的访问速度的，但是因为这个顺序结构并不是标准的数组，无法通过下标来访问指定元素，所以查找的速度基本也是O(N)。
+而相对删除插入等操作就更糟糕，因为还要涉及到重新分配以及移动内存等问题，所以基本在性能上对比link_list是没有优势的。
+不过因为存储的内容不多，所以连续操作情况也还算可以接受，基本上影响不大。（在ziplist很短的情况下）
+然后看一下配置
+list-max-ziplist-entries 512 # 最大接受长度为512，超过此长度则转换为linked_list的存储模式。 list-max-ziplist-value 64 # 每个元素的大小，最大不超过64bytes，超过则转换为linked_list。  查看配置的例子
+redis.lpush &#39;zip_demo&#39;,1 redis.debug(:object,&#39;zip_demo&#39;) # =&amp;gt; &amp;quot;Value at:0x7f8714301a10 refcount:1 encoding:ziplist serializedlength:14 lru:13447321 lru_seconds_idle:11&amp;quot; 512.</description>
+    </item>
+    
+    <item>
+      <title>高并发订单号池</title>
+      <link>http://blog.jerry-tao.com/2016/03/15/order_no_demo/</link>
+      <pubDate>Tue, 15 Mar 2016 20:47:06 +0000</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2016/03/15/order_no_demo/</guid>
+      <description>最近回答了一个关于订单号生成的问题，然后脑洞大开决定用ruby实现一个支持高并发的订单号池。
+订单号池不算很复杂，就是个简单的生产者消费者模型，看图说话。
+worker里面一共有两个：order_check和order_no。
+其中order_check设为周期任务，时间随意了，反正就是定期检查一下redis里的order_no还剩多少，不够了就触发一下order_no_worker。
+# order_check def perform count = $redis.scard(&#39;order_no&#39;) if count &amp;lt; 1000 OrderNoWorker.perform_async end end  order_no用来生成order_no并扔进redis，生成order_no我写的比较简单：
+# order_no def order_no now = Time.now Time.now.strftime(&#39;%Y%m%d&#39;) + now.usec.to_s + (&amp;quot;%05d&amp;quot; % rand(9999)) end  redis的存储用的是set，保证唯一即可。
+重点还是消费啊，一开始写了个sinatra，
+require &#39;sinatra&#39; require &#39;json&#39; get &#39;/&#39; do order_no = $redis.spop(&#39;order_no&#39;) order_no.nil? ? {error:&#39;There is no order_no current.&#39;}.to_json : {order_no: order_no}.to_json end  ab测试
+ab -c100 -n15000 http://localhost:9292/ # HTML transferred: 508434 bytes # Requests per second: 1020.</description>
+    </item>
+    
+    <item>
+      <title>Singleton Class简明教程</title>
+      <link>http://blog.jerry-tao.com/2016/01/14/singleton_class_for_dummy/</link>
+      <pubDate>Thu, 14 Jan 2016 14:47:06 +0000</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2016/01/14/singleton_class_for_dummy/</guid>
+      <description>也许你经常听说singleton class，但是并没有搞清楚它到底是什么，我希望能用尽量简单的语言说明白。
+首先我们必须认识到两件事：
+ 第一，我们常说的class和module，也是ojbect，例如String.class #=&amp;gt; Class。 第二，class是一种用来生成object的模板。  有了这两个基础知识，实际上问题已经简化为singleton class对于object来说是什么。
+对于每一个object来说，会有一个为它提供实例方法的class，即:
+person = Person.new # person里面的实例方法均来自Person  理解了object跟class的关系之后，singleton就可以用一句话来说明：singleton class是只属于一个对象的class。
+所以我们可以打开这个class在里面添加实例方法，即可被这个object使用。跟打开这个object的class添加实例方法的区别在于：在singleton class里面添加的实例方法仅可被该object使用，而再次打开这个class添加的实例方法则可以被所有这个class的object使用。
+person = Person.new person2 = Person.new # 打开Person添加say方法 class Person def say puts &#39;Say my name!&#39; end end person.say # =&amp;gt; &#39;Say my name!&#39; person2.say # =&amp;gt; &#39;Say my name!&#39; # 打开person的singleton class为person添加say_hi方法 class &amp;lt;&amp;lt; person def say_hi puts &#39;Say hi!&#39; end end person.say_hi # =&amp;gt; Say hi! person2.</description>
+    </item>
+    
+    <item>
+      <title>Ruby Hook Methods</title>
+      <link>http://blog.jerry-tao.com/2016/01/13/ruby_hook_methods/</link>
+      <pubDate>Wed, 13 Jan 2016 14:47:06 +0000</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2016/01/13/ruby_hook_methods/</guid>
+      <description>Hook Methods一般译为钩子方法，可以理解为当触发了某个条件执行的方法。例如我们常见的method_missing。
+Method相关
+ respond_to_missing?: 当尝试查看一个missing的方法时执行。 method_missing: 当调用一个不存在的方法时执行。 method_added: 当定义一个方法时执行 method_removed: 当一个方法被移除时执行 singleton_method_added: 当添加一个singleton方法时执行。 singleton_method_removed: 当一个singleton方法被移除时执行。 method_undefined: 当一个方法被undefined的时候执行，undef和remove的区别在于当你在子类中你可以undef掉从父类继承而来的方法，而remove则不可以删除定义在父类中的方法。在父类中无论是使用undef和remove子类都无法继续使用这些方法。 singleton_method_undefined: 当一个singleton方法被undefined时刻执行。  示例代码：
+# respond_to_missing? class Base def respond_to_missing?(sym, *args) true end end Base.new.respond_to?(:missing_method) # 这个跟重写respond_to?的区别主要在于使用下面这个方法 Base.new.method(:missing_method) # =&amp;gt; #&amp;lt;Method: Base#missing_method&amp;gt; # method_missing class Base def method_missing(method_name) puts method_name end end Base.new.missing_method # =&amp;gt; missing_method # method_added class Base def self.method_added(method_name) puts method_name end def missing_method end end # =&amp;gt; missing_method Base.</description>
+    </item>
+    
+    <item>
+      <title>Ruby加载代码的二三事</title>
+      <link>http://blog.jerry-tao.com/2016/01/12/load_code_in_ruby/</link>
+      <pubDate>Tue, 12 Jan 2016 14:47:06 +0000</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2016/01/12/load_code_in_ruby/</guid>
+      <description>1. Ruby的require、load和autoload 除了写很简单的程序之外，大多数情况都不会只使用一个文件来存储所有代码，所以了解一下文件是如何相互组织的有助于理解整体的关系。
+假设我们在一个文件夹内有以下两个文件：
+# codes/person.rb class Person def greet puts &amp;quot;Hello.&amp;quot; end end # codes/main.rb person = Person.new person.greet  在main.rb中我们并不能直接使用person.rb中的代码，需要先把person.rb中的代码require进来。
+# codes/main.rb require &#39;./person&#39;  使用require的时候并不需要写后缀，默认既是rb，也可以指定其他的后缀例如socket.so等。
+当require成功返回true，已经require的文件返回false，找不到抛出LoadError。
+最基本的require的语法是require加路径(相对绝对均可)，但是有个问题，当使用相对路径时，默认的当前路径并不是固定不变的，如果想使用绝对路径，又会由于不同人的系统不同人的环境导致很多问题。
+例如如下文件夹结构：
+├── main.rb ├── person.rb └── scripts └── run.rb # run.rb require &#39;../main&#39;  当我们在scripts里执行run.rb的时候，run会require main，在main里又会require person，但是此时的当前路径是scripts/，所以会找不到person.rb。
+所以接下来我们需要了解一下$LOADED_FEATURES(aka $&amp;ldquo;),$LOAD_PATH(aka $:)。
+$LOADED_FEATURES里保存了已经require过的文件，$LOAD_PATH里保存了查找文件的路径，两者都是数组结构。
+以require &#39;benchmark&#39;为例，在不考虑更复杂的（例如包含了gem或者rails的情况下，下面还会继续介绍），典型的查找流程是这样，现在$LOADED_FEATURES里查找是否已经require过这个文件，如果已经require过，则返回false，如果没有，则会在$LOAD_PATH内依次查找这个文件。
+继续上面的例子，改写如下：
+# codes/main.rb require &#39;person&#39; # codes/scripts/run.rb require &#39;main&#39;  然后在运行的时候ruby -I. scripts/run.rb (-I.代表把当前路径添加到$LOAD_PATH内，你也可以写全路径。)
+你可以在大多数的gem源码中的gemspec里看到这句话，这句话的意思就是在当打包gem的时候把lib添加到$LOAD_PATH内。
+lib = File.</description>
+    </item>
+    
+    <item>
+      <title>关于Constant查找的一切(译)</title>
+      <link>http://blog.jerry-tao.com/2016/01/11/all_about_const_lookup/</link>
+      <pubDate>Mon, 11 Jan 2016 14:47:06 +0000</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2016/01/11/all_about_const_lookup/</guid>
+      <description>注：此文翻译整理自https://cirw.in/blog/constant-lookup，推荐关注，pry主要贡献人
+使用常量很简单，理解如何查找常量的很麻烦。
+虽然一句话就可以说清楚常量查找，依次在Module.nesting, Module.nesting.first.ancestors中查找，如果Module.nesting.first是nil，则在Object.ancestors中查找。，但是为了更好的理解，我们还是举几个例子吧。
+Module.nesting Ruby首先会根据词法作用域(lexical scope)周围的module或者classes的关联的常量来查找:
+module A module B; end module C module D B == A::B end end end  上面的例子里在D中的B首先会查找： A::C::D::B (不存在), 然后 A::C::B (不存在), 最后 A::B (找到了)。
+跟ruby里的其他东西一样, 查找常量的namespace chains也是在运行时通过Module.nesting可以实现自省的（运行时知道自己的Module.nesting）：
+module A module C module D Module.nesting == [A::C::D, A::C, A] end end end  如果你尝试过用简写的声明方式来重打开一个module，你可能已经注意到不使用完整的namespace是无法访问其他常量的。这是因为外面的namespace并没有添加到Module.nesting当中：
+module A module B; end end # 错误 module A::C B end # 正确 module A module D B end end # NameError: uninitialized constant A::C::B  上面错误的例子中，如果要使用B，那么Module.</description>
+    </item>
+    
+    <item>
+      <title>Rails Log Process</title>
+      <link>http://blog.jerry-tao.com/2015/09/29/rails_log_process/</link>
+      <pubDate>Tue, 29 Sep 2015 14:47:06 +0000</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2015/09/29/rails_log_process/</guid>
+      <description>最近研究了一下整理Rails的日志，简单整理下。
+使用工具包括：
+ logstash lograge elasticsearch  0. 准备 如果没有修改过任何配置，rails的日志大概是这样的
+Started POST &amp;quot;/users&amp;quot; for ::1 at 2015-09-28 15:46:22 +0800 Processing by Devise::RegistrationsController#create as HTML Parameters: {&amp;quot;utf8&amp;quot;=&amp;gt;&amp;quot;✓&amp;quot;, &amp;quot;authenticity_token&amp;quot;=&amp;gt;&amp;quot;m/JixAv0ZmXTRLn1mmFGKNF/1MQgb5iXqPThmc3S23B7eiYfCmzwDXALr5yrw9v0dUWdkGVEkGzt8Qa2Q9vlFQ==&amp;quot;, &amp;quot;user&amp;quot;=&amp;gt;{&amp;quot;email&amp;quot;=&amp;gt;&amp;quot;user@example.com&amp;quot;, &amp;quot;password&amp;quot;=&amp;gt;&amp;quot;[FILTERED]&amp;quot;, &amp;quot;password_confirmation&amp;quot;=&amp;gt;&amp;quot;[FILTERED]&amp;quot;}, &amp;quot;commit&amp;quot;=&amp;gt;&amp;quot;Sign up&amp;quot;} (0.1ms) begin transaction User Exists (0.1ms) SELECT 1 AS one FROM &amp;quot;users&amp;quot; WHERE &amp;quot;users&amp;quot;.&amp;quot;email&amp;quot; = &#39;user@example.com&#39; LIMIT 1 (0.1ms) rollback transaction Rendered /usr/local/var/rbenv/versions/2.2.2/lib/ruby/gems/2.2.0/gems/devise-3.4.1/app/views/devise/shared/_links.html.erb (1.6ms) Rendered /usr/local/var/rbenv/versions/2.2.2/lib/ruby/gems/2.2.0/gems/devise-3.4.1/app/views/devise/registrations/new.html.erb within layouts/application (11.1ms) Completed 200 OK in 148ms (Views: 51.5ms | ActiveRecord: 0.</description>
+    </item>
+    
+    <item>
+      <title>Move Rails Development to Docker</title>
+      <link>http://blog.jerry-tao.com/2015/08/14/move_development_to_docer/</link>
+      <pubDate>Fri, 14 Aug 2015 14:47:06 +0000</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2015/08/14/move_development_to_docer/</guid>
+      <description>Install Docker On Mac Prepare 需要了解的几个工具：
+ docker boot2docker docker-compose virtualbox  docker才是我们真正想安装的东西，不过不像其他的大部分软件，docker只兼容linux内核，所以在mac和win下都需要boot2docker。
+先说一下如果我们想装一个只能在linux下运行的软件的常规思路吧，装个虚拟机，虚拟个linux，boot2docker就做了这件事，他会下载一个很小的linux内核iso来安装到virtualbox里，然后把在本机上运行的docker命令映射到虚拟机里面去。
+所以，这里我们并没有在自己的系统上运行docker，使用网络的时候一定要注意，使用boot2docker本机IP对应的是虚拟机的IP。
+docker-compose是一种使用yml来配置简单的把几个docker容器放到一起跑的方法。
+Install  Virtualbox
+ brew install caskroom/cask/brew-cask brew cask install virtualbox  安装boot2docker
+ brew install boot2docker  初始化boot2docker
+这里初始化会下载boot2docker.iso还是很慢的，下面是baidu云链接。
+http://pan.baidu.com/s/1eQi295S
+ make ~/.boot2docker &amp;amp;&amp;amp; cp boot2docker.iso ~/.boot2docker boot2docker init  上面这个执行一次就好，用来配置虚拟机的。
+ 启动boot2docker
+ boot2docker up $(boot2docker shellinit)  前者用来启动boot2docker的虚拟机，建议设为开机自动执行，后者用来映射命令，建议放到terminal的.bashrc/.zshrc里。
+如果不出错，这个时候docker就可以使用了，可以打印info测试一下。
+ docker info docker pull ubuntu:latest  安装docker-compose
+ brew install docker-compose  配置镜像加速</description>
+    </item>
+    
+    <item>
+      <title>A Little Piece Code in ActionController</title>
+      <link>http://blog.jerry-tao.com/2015/05/06/a_little_piece_code_in_action_controller/</link>
+      <pubDate>Wed, 06 May 2015 11:47:06 +0000</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2015/05/06/a_little_piece_code_in_action_controller/</guid>
+      <description>我们都知道当使用rails render的时候可以render各种格式的响应，例如下面响应json，xml。
+render json: @obj render xml: @obj  并且，我们是可以自己定义自己的render格式的，比如 Crafting Rails 4 Applications 里介绍的render pdf: @content。
+下面这个代码简单重现了这个过程是怎么实现的。 比较好玩的地方就是关于&amp;rsquo;如何来保证扩展性&amp;rsquo;这一点的实现方式。
+renders = Set.new # 使用这个方法可以添加一种新的格式 ActionController::Renderers.add def add(key, &amp;amp;block) define_method(&amp;quot;_render_option_#{key}&amp;quot;, &amp;amp;block) renders &amp;lt;&amp;lt; key.to_sym end # 如何使用add方法 add :json do |json,options| # 真正render json的代码。 end # render时的处理 def render(options) renders.each do |name| if options.key? name send(&amp;quot;_render_option_#{name}&amp;quot;, options.delete(name), options) end end end  在这里还发现了另一段非常好玩的代码：
+module Renderers module All include Renderers end end # 简化版 module A module B include A end end  仔细想下这个逻辑还算蛮好玩的。</description>
+    </item>
+    
+    <item>
+      <title>ActiveSupport BacktraceCleaner</title>
+      <link>http://blog.jerry-tao.com/2015/03/12/active_support_backtrace/</link>
+      <pubDate>Thu, 12 Mar 2015 11:47:06 +0000</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2015/03/12/active_support_backtrace/</guid>
+      <description>lol, 这一篇完全是为了凑数的。
+在ruby中raise一个异常的同时会给这个异常一个异常栈，是一个字符串的数组，类似于 RuntimeError, line 3之类的信息。
+例如
+[6] pry(main)&amp;gt; begin [6] pry(main)* raise RuntimeError [6] pry(main)* rescue RuntimeError=&amp;gt;error [6] pry(main)* error.backtrace.size [6] pry(main)* end #=&amp;gt; 28 #这是在我这个环境里的数字 其中包括了pry 一直到rbenv的异常  这个苦逼的数字就是说，我们raise一个异常，backtrace里就会有N多调用信息。为了精简这些信息，就有了ActiveSupport::BacktraceCleaner(说白了就是个字符串数组过滤器)。
+BacktraceCleaner提供两种过滤，一种是修改，一种是过滤掉。
+bc = ActiveSupport::BacktraceCleaner.new bc.add_filter {|line| line.sub(&#39;/Users/jerry&#39;,&#39;~&#39;)} #把绝对路径换成相对路径 bc.add_silencer {|line| !line.index(&#39;rbenv&#39;).nil?} #把包含rbenv的过滤掉 #! 执行顺序是先filter然后silencer bc.clean(error.backtrace) #上面例子里的error  下面的是rails默认的backtrace cleaner。
+require &#39;active_support/backtrace_cleaner&#39; module Rails class BacktraceCleaner &amp;lt; ActiveSupport::BacktraceCleaner APP_DIRS_PATTERN = /^\/?(app|config|lib|test)/ RENDER_TEMPLATE_PATTERN = /:in `_render_template_\w*&#39;/ EMPTY_STRING = &#39;&#39;.freeze SLASH = &#39;/&#39;.</description>
+    </item>
+    
+    <item>
+      <title>Angular Best Practices</title>
+      <link>http://blog.jerry-tao.com/2015/03/06/angular_best_practices/</link>
+      <pubDate>Fri, 06 Mar 2015 11:47:06 +0000</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2015/03/06/angular_best_practices/</guid>
+      <description>本文所有内容来源于http://www.meetup.com/AngularJS-MTV/events/93943412/ （我个人仅仅是整理学习一下:D）。
+(本文在我的github上存储，欢迎P/R)
+视频地址：https://www.youtube.com/watch?v=ZhfUv0spHCY
+slide地址：http://goo.gl/CD0Is
+Version: 1.0.0@15-3-6
+1. 建立项目  yeoman 参考angular-seed  2. 加载javascript  在HTML下面使用script标签。 AMD(requirejs) 如果使用这个你必须在加载完js之后手动设置一下ngApp位置：  angluar-seed/index-async.html
+总结：其实大多数angular app都是SPA， 所以一次加载js的方式即可。
+3. Zen Of Angular 内容显示
+使用{{}}这种方式来显示值会有问题，有些情况下index.html会闪现并且用户会看到{{}}部分。
+解决办法：
+ 使用ng-cloak和directive来隐藏{{}}。 使用ng-bind来代替{{}} 只需要在index.html中使用，动态加载的内容会先预编译再显示，所以没有这个问题。  整理js
+缩小和混淆js的时候注意一下页面的变量还有inject是依赖于名称的，最好不要随便修改变量名称。
+Don&amp;rsquo;t fight the html, extend it. Templates
+不支持IE的清空下 &amp;lt;my-directive&amp;gt; 这种带namespace的命名方式是推荐的做法。
+考虑支持IE的情况下 使用&amp;lt;div my-directive&amp;gt;, 这种情况IE可以正常的处理，仅仅使用&amp;lt;my-directive&amp;gt;不可以。
+考虑支持验证HTML，还可以再加个前缀&amp;lt;div x-my-directive&amp;gt;或者&amp;lt;div data-my-directive&amp;gt;
+Separate presentation and business logic. Controllers
+ 不应该包含DOM的引用。 应该响应View的行为：点击按钮，或者提交表单。  Services
+ 不应该包含DOM的引用。 行为不应该跟view有关。  所有对DOM的操作应该放进directive，</description>
+    </item>
+    
+    <item>
+      <title>ActiveSupport Concern</title>
+      <link>http://blog.jerry-tao.com/2015/03/03/active_support_concern/</link>
+      <pubDate>Tue, 03 Mar 2015 11:47:06 +0000</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2015/03/03/active_support_concern/</guid>
+      <description>其实很早之前就写过concern的blog，但是貌似没有保存，为了保持active_support完整性，再整理一次。
+其实concern就是简化了mixin的写法，让mixin写起来更舒服些，看下面的demo。
+#without concern module A def self.included(base) #Call class method here. # =&amp;gt; base.has_many :user # Just for example #extend class methods here. base.extend ClassMethods end module ClassMethods def hello p &#39;hello&#39; end end end class Team include A end Team.hello #with concern module A extend ActiveSupport::Concern included do |base| #Call class method here. # has_many :user # Just for example #extend class methods here. end class_methods do # Or use module ClassMethods def hello p &#39;hello&#39; end end end class Team include A end Team.</description>
+    </item>
+    
+    <item>
+      <title>ActiveSupport PerThreadRegistry：Get Controller Everywhere</title>
+      <link>http://blog.jerry-tao.com/2015/02/27/active_support_get_controller_everywhere/</link>
+      <pubDate>Fri, 27 Feb 2015 11:47:06 +0000</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2015/02/27/active_support_get_controller_everywhere/</guid>
+      <description>经常看到这样的问题 &amp;lsquo;How can i get current_user/controller/action/request in models?&amp;lsquo;。并且这种问题的解决方案一般来说都很一致：存进Thread.current[]里。
+(虽然我个人并不喜欢这种做法，不过很多时候这样做确实很简单，并且说实话我并没有找到更好的办法，what happend in controller, should stay in controller.)
+然后我们看一下使用PerThreadRegistry来存储的方法。本质上来说，存储的地方仍然是Thread.current[], 只是封装了一下然后加了一个namespace。
+使用 先看一个简单的用法：
+class DemoRegistry extend ActiveSupport::PerThreadRegistry attr_accessor :user end DemoRegistry.user = &#39;Jerry&#39; DemoRegistry.user #=&amp;gt;&#39;Jerry&#39; Thread.current[&#39;DemoRegistry&#39;].user == DemoRegistry.user #=&amp;gt; true  到这里其实很明显如何把current_name之类的变量存储在thread里了。
+看一下存储current_user的例子：
+class PostsController &amp;lt; ApplicationController before_action :set_current_user private def set_current_user UserRegistry.user = current_user end end class Post&amp;lt;ActiveRecord::Base after_save :set_user def set_user UserRegistry.user #这里就能取出来了 end end  源码 module PerThreadRegistry def self.</description>
+    </item>
+    
+    <item>
+      <title>ActiveSupport Notifications</title>
+      <link>http://blog.jerry-tao.com/2015/02/23/active_support_notifications/</link>
+      <pubDate>Mon, 23 Feb 2015 11:47:06 +0000</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2015/02/23/active_support_notifications/</guid>
+      <description>ActiveSupport::Notifications实现了一个轻量级的发布订阅系统，可以用来解耦我们的业务逻辑，主要涉及的文件是下面两个：
+ lib/active_support/notifications.rb lib/active_support/subscriber.rb lib/active_support/notifications/fanout.rb lib/active_support/notifications/instrumenter.rb  先来看一个简单的使用例子吧：
+require &#39;active_support/notifications&#39; # 注册一个订阅者 ActiveSupport::Notifications.subscribe(&#39;notifications.hello&#39;) do |name, start, finish, id, args| p &amp;quot;#{args[:name]} said Hello by calling #{name}&amp;quot; end # 发布一条消息 ActiveSupport::Notifications.instrument(&#39;notifications.hello&#39;, name:&#39;Jerry&#39; )  然后通过使用subscriber我们可以为我们的订阅者实现一个namespace：
+require &#39;active_support/notifications&#39; require &#39;active_support/subscriber&#39; class EventSubscriber &amp;lt; ActiveSupport::Subscriber def say_hello(event) p event end end EventSubscriber.attach_to :namespace_demo # 把我们的subscriber注册到namespace ActiveSupport::Notifications.instrument(&#39;say_hello.namespace_demo&#39;, options:&#39;Hello&#39; )  在这个例子中，namespace_demo就是我们event的namespace，方法名say_hello就是事件的名称。
+考虑更加真实一点的应用场景，就是当我们使用engine来解耦的时候，在engine和application直接进行通信。可以看一下这篇文章：Using events to decouple Rails applications</description>
+    </item>
+    
+    <item>
+      <title>ActiveSupport Aliasing</title>
+      <link>http://blog.jerry-tao.com/2015/02/22/active_support_aliasing/</link>
+      <pubDate>Sun, 22 Feb 2015 11:47:06 +0000</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2015/02/22/active_support_aliasing/</guid>
+      <description>Aliasing(active_support/lib/active_support/core_ext/module/aliasing.rb)是active_support中对module的一个扩展，这里面就定义里两个方法, alias_method_chain和alias_attribute。
+alias_method_chain 这个方法有点类似轻量级的AOP, 其实这个功能ruby本身就可以通过alias和alias_method做到，这个扩展只不过让这个功能用起来更简单一些。
+先看一下效果吧
+require &#39;active_support&#39; require &#39;active_support/core_ext&#39; class Demo def hello p &#39;hello!&#39; end def hello_with_name p &#39;Before say hello!&#39; name = &#39;Alice.&#39; p &#39;Alice&#39; hello_without_name p &#39;After say hello!&#39; end alias_method_chain :hello, :name end Demo.new.hello #&amp;quot;Before say hello!&amp;quot; #&amp;quot;Alice&amp;quot; #&amp;quot;hello!&amp;quot; #&amp;quot;After say hello!&amp;quot;  通过上面的例子可以看出，通过使用alias_method_chain, 你可以很轻松的在某个方法执行前后加入你想自定义执行的内容。
+使用的方式应该也可以看出来，你需要定义一个原方法名_with_用于alias_method_chain的名字的方法，然后在这个方法内部可以通过原方法名_without_用于alias_method_chain的名字来调用原来的方法。
+比如我最近使用的paranoid这个gem，我想给每个model都加上act_as_paranoid来把每个model都变成软删除的效果。
+并不能直接打开ActiveRecord::Base去monkey patch，因为这个会得不到table_name, 所以：
+#config/initializers/paranoid.rb ActiveRecord::Base.module_eval do class &amp;lt;&amp;lt; self def inherited_with_paranoid(subclass) skip_models = %w(schema_migrations versions activities) inherited_without_paranoid(subclass) table_name = subclass.</description>
+    </item>
+    
+    <item>
+      <title>Rails常用Gem</title>
+      <link>http://blog.jerry-tao.com/2015/02/09/rails_gems_1/</link>
+      <pubDate>Mon, 09 Feb 2015 11:47:06 +0000</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2015/02/09/rails_gems_1/</guid>
+      <description>整理的只是我用到的，有一部分是rails项目自带的，我简单说一下作用。
+查找gems的地方：
+ github rubygems rubytool  Rails基础类  spring：加速环境 4.x之后加入rails默认gem。  还有spring-commands-rspec
+ [jbuilder]: 个人感觉比grape好用，不过看习惯，生成json的view。  测试类  [rspec-rails]: 真的不用介绍。
+ [factory_girl_rails]: 测试假数据就靠这个了。
+ [database_cleaner]: 每次测试结束后自动帮你删除内容。
+ [forgery]: 生成假信息的。
+ capybara: acceptance test。
+ [simplecov]: 测试覆盖率。
+  数据库类  activerecord-session_store: 把session保存在数据库。
+ [seedbank]: 默认的seed增强方案。
+ [paranoia]: 软删除数据，不真正删除，而是加deleted_at。
+ [annotate]: 自动注释model，spec/models
+  功能类  [devise]: 大名鼎鼎的devise，不用解释了吧。  devise衍生出了很多gem，不一一描述。
+ [omniauth]: Login with Google/Facebook/twitter&amp;hellip;.
+ [devise_token_auth]: 如果你使用rails来做api，恰好使用angular来做前端，不要错过。
+  非angular也可以使用。</description>
+    </item>
+    
+    <item>
+      <title>Rails Test Details 2: Model Test</title>
+      <link>http://blog.jerry-tao.com/2015/02/06/rails_test_details_2/</link>
+      <pubDate>Fri, 06 Feb 2015 11:47:06 +0000</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2015/02/06/rails_test_details_2/</guid>
+      <description>最近一直在跟测试打交道，遇见了N多爬不完的坑，所以在这里总结一下一些常见的坑。
+测试栈：
+ rails 4.2 rspec-rails 3.1 factory_girl_rails database_cleaner simplecov forgery  数据库： Postgresql 9.6
+操作系统： Mac OS 10.9
+今天的主题是model。所以在开始之前我们需要先回顾一下rails的model。
+首先我们先考虑一下model里面都有什么：
+ attributes assocations validations callbacks methods scopes concerns  上面的内容中，attributes和单纯的associations我觉得没有测试的必要，因为如果这两部分出错，在migrates和测试validations时刻就可以检测出来，所以这两部分跳过。
+1. Validations 我觉得validations部分需要测试两个点，首先你要确保你想要validate的属性都加上了validations。
+describe User do let(:user) { build(:user) } subject { user } describe &amp;#39;validations&amp;#39; do it { should validate_presence_of(:first_name) } it { should validate_presence_of(:last_name) } end end 其次你要确保构建一个valid的factory，这一步也是其他测试包括controller测试的基础。
+describe User do let(:user) { build(:user) } subject { user } describe &amp;#39;validations&amp;#39; do .</description>
+    </item>
+    
+    <item>
+      <title>Rails Test Details 1: Build Data</title>
+      <link>http://blog.jerry-tao.com/2015/02/05/rails_test_details_1/</link>
+      <pubDate>Thu, 05 Feb 2015 11:47:06 +0000</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2015/02/05/rails_test_details_1/</guid>
+      <description>最近一直在跟测试打交道，遇见了N多爬不完的坑，所以在这里总结一下一些常见的坑。
+测试栈：
+ rails 4.2 rspec-rails 3.1 factory_girl_rails database_cleaner simplecov forgery  数据库： Postgresql 9.6
+操作系统： Mac OS 10.9
+今天的主题是构建测试数据。所以主要就是factory_girl和forgery了。
+构建测试数据可以说是测试过程中最繁琐的一步了，很多时候为了测试一行代码你不得不准备N多的数据用来测试，尤其是当你测试一个controller方法的时候你可能需要构建超过10个的关联模型以及基本数据模型，所以熟悉构建数据会节省N多时间。
+1. 简单数据 构建一个简单的数据非常容易，写两个demo： FactoryGirl.define do factory :user do email &amp;#39;demo@test.com&amp;#39; password &amp;#39;password&amp;#39; password_confirmation &amp;#39;password&amp;#39; end end FactoryGirl.define do factory :profile do title Forgery::Name.academic_title first_name Forgery::Name.first_name last_name Forgery::Name.last_name gender Forgery::Personal.gender birthday Time.now - 35.years end end 上面构建了user和profile两个独立的factory，当你想使用他们的时候可以build(:user)(＝User.new attrs), create(:user)(=User.create attrs)还有attributes_for(:user)(={attrs})。
+Forgery的作用主要是生成一些假的信息，总比我们自己闭着眼睛想一些名字好。不过缺点是你不能直接预测你的数据内容用来测试。
+比如当你想测试一个full_name方法时： def full_name [profile.first_name,profile.last_name].join(&amp;#39; &amp;#39;) end expect(profile.full_name).to eq([profile.first_name,profile.last_name].join(&amp;#39; &amp;#39;)) 在这种场景下Forgery的意义并不是很大，仅仅是执行了两次同一个方法而已。</description>
+    </item>
+    
+    <item>
+      <title>Use Postgresql uuid in Rails</title>
+      <link>http://blog.jerry-tao.com/2015/02/04/use_postgresql_uuid_in_rails/</link>
+      <pubDate>Wed, 04 Feb 2015 11:47:06 +0000</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2015/02/04/use_postgresql_uuid_in_rails/</guid>
+      <description>使用uuid来替换integer的id的好处有两个：
+ 多个数据库的时候不会产生重复ID 避免对外泄漏数据（比如说如果是integer的订单系统，很容易通过自增来判断数据大小。）  因为postgresql原生就支持uuid，所以只需要在rails中开启一下特性即可。
+新建一个migration文件（最好手工建立，确保时间戳在其他migration之前）：
+class AddUuidExtension &amp;lt; ActiveRecord::Migration def change enable_extension &amp;#39;uuid-ossp&amp;#39; end end 然后你可能需要手工修改以后的或者已经存在的migration，
+create_table :products, id: :uuid do |t| # 在建表时指定ID类型 ... #在引用部分的修改。 t.uuid :order_id end One more thing 还有额外的一点，当你使用uuid之后，如果使用factory_girl来构建假数据可能出现的问题。
+这个取决于你是否有验证unique，当你验证unique这个属性的同时使用里build_stubbed的时候，因为factory_girl默认生成假ID的方法是1000+x, 但是unique这个验证却是需要检查数据库的，所以会产生一个ERROR。
+下面有一个快速的修复方法：
+#spec/supports/factory_girl.rb require &amp;#39;factory_girl_rails&amp;#39; module FactoryGirl module Strategy class Stub private def next_id SecureRandom.uuid end end end end RSpec.configure do |config| config.include FactoryGirl::Syntax::Methods end 还有不要忘记在你的spec_helper里面require supports下的文件:
+Dir[Rails.root.join(&#39;spec/support/**/*.rb&#39;)].each { |f| require f }</description>
+    </item>
+    
+    <item>
+      <title>ActiveSupport::Inflector</title>
+      <link>http://blog.jerry-tao.com/2015/01/27/active_support_inflector/</link>
+      <pubDate>Tue, 27 Jan 2015 11:47:06 +0000</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2015/01/27/active_support_inflector/</guid>
+      <description>inflector是active_support中的内容，用来处理应对不同需求的字符串。例如post -&amp;gt; posts，post -&amp;gt; Post post_controller-&amp;gt;PostController等。
+所有跟inflector有关的文件都可以在activesupport/lib/inflector.rb里找到，所以你可以单独使用这个模块。
+# in case active_support/inflector is required without the rest of active_support require &amp;#39;active_support/inflector/inflections&amp;#39; # 使用singleton模式定义了一个存储所有转换规则的空间。 require &amp;#39;active_support/inflector/transliterate&amp;#39; # 把非ASCII字符转换为ASCII字符还有把字符串转换成适合URL的格式。 require &amp;#39;active_support/inflector/methods&amp;#39; # 具体的转换方法。 require &amp;#39;active_support/inflections&amp;#39; # 内置的转换规则。 require &amp;#39;active_support/core_ext/string/inflections&amp;#39; # 扩展ruby的字符串。 先来看一下active_support/lib/inflector/inflections.rb里的几行关键代码：
+module ActiveSupport module Inflector extend self class Inflections @__instance__ = ThreadSafe::Cache.new #定义一个存储空间 ... def initialize @plurals, @singulars, @uncountables, @humans, @acronyms, @acronym_regex = [], [], [], [], {}, /(?=a)b/ #定义各个规则的存储空间 # @plurals - 转换成复数的规则 # @singulars - 转换成单数的规则 # @uncountables - 不可数的单词 # @humans - 人性化的规则 the_title =&amp;gt; the title # @acronym_reges - 不标准的一些规则 例如 RESTFul end end def inflections(locale = :en) if block_given?</description>
+    </item>
+    
+    <item>
+      <title>I18n with Rails and Angular</title>
+      <link>http://blog.jerry-tao.com/2014/12/01/i18n_with_rails_and_angular/</link>
+      <pubDate>Mon, 01 Dec 2014 11:47:06 +0000</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2014/12/01/i18n_with_rails_and_angular/</guid>
+      <description>这里简单记录一下rails和angular一起完成i18n的流程。
+Part 1: I18n with Rails 写locales文件 locale文件默认存在于config/locales/
+可修改，定义位置在application配置里
+config.i18n.default_locale=:en #设置默认的语言 #config/locales/ #config/locales/page.yml #config/locales/message.yml locale默认是yml格式，比如下面就是定义英文的key
+en: hello: Hello Wrold 设置locale 这里的核心就是在后台要获取到需要使用的语言环境。
+最简单的办法：
+在application_controller里面添加：
+before_action :set_locale def set_locale I18n.locale = params[:locale] || I18n.default_locale end 这样例如下面的请求就会使用de.yml里的key
+http://localhost:3000?locale=de
+翻译内容 两个地方：
+ 返回的message里 view里面直接翻译  其实都一样：
+#在controller里 redern json: {hello: t(:hello)} #在view里 &amp;lt;%=t(:hello)%&amp;gt; 这两种翻译都会生成Hello World
+Part 2: localeapp with Rails 在localapp.com新建一个project。
+#然后添加localeapp的gem。 `gem &amp;#39;localeapp&amp;#39;` #根据你的key安装一下 `bundle exec localeapp install &amp;lt;API_KEY&amp;gt;` #config/initializers/localeapp.rb require &amp;#39;localeapp/rails&amp;#39; Localeapp.</description>
+    </item>
+    
+    <item>
+      <title>ActiveSupport::Configurable</title>
+      <link>http://blog.jerry-tao.com/2014/02/18/active_support-configurable-in-rails/</link>
+      <pubDate>Tue, 18 Feb 2014 11:47:06 +0000</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2014/02/18/active_support-configurable-in-rails/</guid>
+      <description>Configurable是active_support里面让一个类可以实现configurable的扩展，先看一个demo。
+class Setting include ActiveSupport::Configurable end Setting.config.send_mail=true Setting.config #{:send_mail=&amp;gt;true} admin.setting = Setting.new admin.setting.config #{} admin.setting.config.send_mail #true admin.setting.config.send_mail=false admin.setting.config #{:send_mail=&amp;gt;false} admin.setting.config.send_mail #false 从上面的例子可以看出，config既可以作为一个类方法使用也可以为实例添加，实例默认是跟class一样的config，不过也可以自定义并且不影响class的config。
+实现这部分的源码： module Configurable extend ActiveSupport::Concern class Configuration &amp;lt; ActiveSupport::InheritableOptions #... end module ClassMethods def config @_config ||= if respond_to?(:superclass) &amp;amp;&amp;amp; superclass.respond_to?(:config) superclass.config.inheritable_copy else # create a new &amp;#34;anonymous&amp;#34; class that will host the compiled reader methods Class.new(Configuration).new end end end def config @_config ||= self.class.config.inheritable_copy end end Configuration是继承自InheritableOptions的，也稍微看一眼这个类 class InheritableOptions &amp;lt; OrderedOptions def initialize(parent = nil) if parent.</description>
+    </item>
+    
+    <item>
+      <title>自定义mongoid的model id</title>
+      <link>http://blog.jerry-tao.com/2014/02/07/custom-id-with-mongoid-in-rails/</link>
+      <pubDate>Fri, 07 Feb 2014 11:47:06 +0000</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2014/02/07/custom-id-with-mongoid-in-rails/</guid>
+      <description>如果在rails使用mongoid，在返回json的时候会有个小问题，就是id格式会如下：
+{ &amp;#34;code&amp;#34;: 200, &amp;#34;data&amp;#34;: [ { &amp;#34;id&amp;#34;: { &amp;#34;$oid&amp;#34;: &amp;#34;52f472cc6a65721a2f000000&amp;#34; }, &amp;#34;name&amp;#34;: &amp;#34;abc&amp;#34; } ] } 过去是用如下代码修改：
+Moped::BSON::ObjectId.class_eval do def to_json(*args) to_s.to_json end #Jbuilder使用的to json策略 def as_json(*args) to_s.as_json end end
+如果用的是git上最新的mongoid代码，BSON是在mongoid自己的extensions里的，所以修改如下：
+BSON::ObjectId.class_eval do def to_json(*args) to_s.to_json end #Jbuilder使用的to json策略 def as_json(*args) to_s.as_json end end
+看下结果：
+{ &amp;#34;code&amp;#34;: 200, &amp;#34;data&amp;#34;: [ { &amp;#34;id&amp;#34;: &amp;#34;52f472cc6a65721a2f000000&amp;#34;, &amp;#34;name&amp;#34;: &amp;#34;abc&amp;#34; } ] }</description>
+    </item>
+    
+    <item>
+      <title>简单的长微博示例</title>
+      <link>http://blog.jerry-tao.com/2014/01/22/long-weibo/</link>
+      <pubDate>Wed, 22 Jan 2014 11:47:06 +0000</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2014/01/22/long-weibo/</guid>
+      <description>长微博就是把文字转换成图片，主要用到的gem是imgkit。
+imgkit是一个通过open3来调用wkhtmltoimage生成图片的gem，源码不是很复杂，使用也很简单。
+基本步骤如下：
+rails new long-weibo #Add imgkit and carrierwave to Gemfile and run bundle rails g model weibo weibo:string image:string rake db:migrate rails g controller home index create 修改一下routes.rb post &amp;#34;create&amp;#34; =&amp;gt;&amp;#39;home#create&amp;#39; root &amp;#39;home#index&amp;#39; 写个简单的界面home/index.html.erb &amp;lt;textarea id=&amp;#34;content&amp;#34; name=&amp;#34;content&amp;#34;&amp;gt; &amp;lt;/textarea&amp;gt; &amp;lt;a id=&amp;#34;create&amp;#34; href=&amp;#34;#create&amp;#34;&amp;gt;Create&amp;lt;/a&amp;gt; &amp;lt;div id=&amp;#34;image&amp;#34;&amp;gt; &amp;lt;/div&amp;gt; 写段简单的js $(function(){ $(&amp;#34;#create&amp;#34;).click(function(){ var content = $(&amp;#34;#content&amp;#34;).val(); $.post(&amp;#34;/create&amp;#34;,{content:content},function(returnData){ $(&amp;#34;#image&amp;#34;).html(&amp;#34;&amp;lt;img src=&amp;#39;&amp;#34;+returnData+&amp;#34;&amp;#39;&amp;gt;&amp;#34;); }); }); }); 把controller改改 def index end def create @weibo = Weibo.create(weibo:params[:content]) render :text=&amp;gt;&amp;#34;#{@weibo.image.url}&amp;#34; end 把model改改 class Weibo &amp;lt; ActiveRecord::Base after_create :generate_image mount_uploader :image,ImageUploader private def generate_image file = Tempfile.</description>
+    </item>
+    
+    <item>
+      <title>wkhtmltoimage简介</title>
+      <link>http://blog.jerry-tao.com/2014/01/21/wkhtmltoimg-intro/</link>
+      <pubDate>Tue, 21 Jan 2014 11:47:06 +0000</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2014/01/21/wkhtmltoimg-intro/</guid>
+      <description>最近有个需求需要从网页生成图片，找到了这么个东西，wkhtmltoimage。
+这是一个基于webkit来把网页生成图片的开源项目，可惜的是文档少的可怜，所以简单总结一下。
+通过URL生成图片：
+wkhtmltoimage http://www.baidu.com/ ~/baidu.jpg
+通过本地html生成图片：wkhtmltoimage ~/index.html ~/index.png
+关于HTML中引用的资源介绍：
+只要你通过浏览器打开你要生成图片的HTML，如果所有资源都正常被引用了，那么在生成的时候就不会丢失。
+关于HTML中CSS样式介绍：
+因为是基于webkit的，所以跟chrome打开的效果最接近。
+关于HTML中js load的介绍： 有很多网页有很多图片等资源是后加载进来的，为了测试这种情况我们试一下jd的首页： wkhtmltoimage http://www.jd.com ~/jd.png
+打开之后可以发现所有图片资源都没有正常显示，关于这点大家要注意一下。
+关于生成图片的尺寸： wkhtmltoimage --height 200 --width 400 http://www.baidu.com/ ~/baidu-small.png
+这个height跟width类似你用浏览器访问，然后resize浏览器到这个大小的时候的显示情况。
+关于生产图片的质量： wkhtmltoimage --quality 30 http://www.baidu.com ~/baidu-quality.png
+这个可以设置生成图片的质量，默认是94,取值范围是0～100.
+关于生成图片的大小： 有些时候我们不想对整个网页截图，所以需要设置一些剪切效果。 wkhtmltoimage --crop-h 20 --crop-w 20 --crop-x 0 --crop-y 0 http://www.baidu.com/ ~/bd-small.png
+这个会生成一个高20宽20的以（0,0）为起点坐标的正方形图片。
+关于生成图片的格式：
+默认支持的格式包括PNG，JPG，TIFF，基本涵盖了常见的图片格式，通过后缀就可以实现。
+同时，还有一个wkhtmltopdf的项目，跟这个使用方式类似。
+wkhtmltoimage的下载地址： wkhtmltoimage</description>
+    </item>
+    
+    <item>
+      <title>Ruby标准库学习：Open3</title>
+      <link>http://blog.jerry-tao.com/2014/01/20/ruby-std-lib-open3/</link>
+      <pubDate>Mon, 20 Jan 2014 11:47:06 +0000</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2014/01/20/ruby-std-lib-open3/</guid>
+      <description>Open3是Ruby标准库中的一员，主要提供对系统命令行的调用。
+官方描述是，开启一个可以访问stdout，stdin，stderr三个标准流管道的子进程。
+先看一个Hello World。
+require &amp;#39;open3&amp;#39; Open3.popen3(&amp;#34;pwd&amp;#34;){|i,o,e,t| p o.readline } #stdin,stdout,stderr,thread #=&amp;gt; prints &amp;#39;/home/jerry\n&amp;#39;. Open3的示例方法popen3：
+def popen3(*cmd, &amp;amp;block) if Hash === cmd.last opts = cmd.pop.dup else opts = {} end in_r, in_w = IO.pipe opts[:in] = in_r in_w.sync = true out_r, out_w = IO.pipe opts[:out] = out_w err_r, err_w = IO.pipe opts[:err] = err_w popen_run(cmd, opts, [in_r, out_w, err_w], [in_w, out_r, err_r], &amp;amp;block) end module_function :popen3 在Open3里还有几个其他方法，跟popen3都差不多。罗列一下：
+ Open3.popen3 : pipes for stdin, stdout, stderr Open3.</description>
+    </item>
+    
+  </channel>
+</rss>

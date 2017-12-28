@@ -3,8 +3,8 @@
 <head>
   
   <meta charset="utf-8">
-  <title>Jerry Tao</title>
-  <meta name="description" content="Jerry Tao">
+  <title>ActiveSupport::Inflector</title>
+  <meta name="description" content="ActiveSupport::Inflector">
   <meta name="author" content="">
   
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -336,8 +336,6 @@ body {
 
   
   
-  <link href="http://blog.jerry-tao.com/index.xml" rel="alternate" type="application/rss+xml" title="Jerry Tao Feed" />
-  
 
   <meta name="generator" content="Hugo 0.31.1" />
   
@@ -388,831 +386,138 @@ body {
 <div class="pure-g">
     <div class="pure-u-1-24 pure-u-md-5-24"></div>
 	<div class="pure-u-11-12 pure-u-md-5-8">
-	<div class="post-content">
-	
-	  <p class="posts-name">Recent posts:</p>
-
-	  <ul class="posts">
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2017/08/08/ruby_process/">Ruby Process</a>
-
-		  <p class="footnote">
-			<time datetime="08-08-2017T00:00:00Z">08-08-2017</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2017/03/16/cache_cluster_in_ruby_demo/">杂七杂八的缓存</a>
-
-		  <p class="footnote">
-			<time datetime="03-16-2017T20:47:06Z">03-16-2017</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2017/03/08/gateway_in_mruby/">实现一个简单的Gateway</a>
-
-		  <p class="footnote">
-			<time datetime="03-08-2017T20:47:06Z">03-08-2017</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2017/02/22/rails_routes_2/">Rails Routes 源码(2)</a>
-
-		  <p class="footnote">
-			<time datetime="02-22-2017T20:47:06Z">02-22-2017</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2017/02/15/rails_routes_1/">Rails Routes 源码(1)</a>
-
-		  <p class="footnote">
-			<time datetime="02-15-2017T12:47:06Z">02-15-2017</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2017/02/07/load_balance/">Load Balance简介</a>
-
-		  <p class="footnote">
-			<time datetime="02-07-2017T12:47:06Z">02-07-2017</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2017/02/03/http2/">HTTP2简介</a>
-
-		  <p class="footnote">
-			<time datetime="02-03-2017T12:47:06Z">02-03-2017</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2016/09/09/lazy_hash/">使用延迟加载来优化redis请求</a>
-
-		  <p class="footnote">
-			<time datetime="09-09-2016T12:47:06Z">09-09-2016</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2016/09/05/redis_ziplist/">Redis Ziplist总结</a>
-
-		  <p class="footnote">
-			<time datetime="09-05-2016T12:47:06Z">09-05-2016</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2016/03/15/order_no_demo/">高并发订单号池</a>
-
-		  <p class="footnote">
-			<time datetime="03-15-2016T20:47:06Z">03-15-2016</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2016/01/14/singleton_class_for_dummy/">Singleton Class简明教程</a>
-
-		  <p class="footnote">
-			<time datetime="01-14-2016T14:47:06Z">01-14-2016</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2016/01/13/ruby_hook_methods/">Ruby Hook Methods</a>
-
-		  <p class="footnote">
-			<time datetime="01-13-2016T14:47:06Z">01-13-2016</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2016/01/12/load_code_in_ruby/">Ruby加载代码的二三事</a>
-
-		  <p class="footnote">
-			<time datetime="01-12-2016T14:47:06Z">01-12-2016</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2016/01/11/all_about_const_lookup/">关于Constant查找的一切(译)</a>
-
-		  <p class="footnote">
-			<time datetime="01-11-2016T14:47:06Z">01-11-2016</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/09/29/rails_log_process/">Rails Log Process</a>
-
-		  <p class="footnote">
-			<time datetime="09-29-2015T14:47:06Z">09-29-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/08/14/move_development_to_docer/">Move Rails Development to Docker</a>
-
-		  <p class="footnote">
-			<time datetime="08-14-2015T14:47:06Z">08-14-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/05/06/a_little_piece_code_in_action_controller/">A Little Piece Code in ActionController</a>
-
-		  <p class="footnote">
-			<time datetime="05-06-2015T11:47:06Z">05-06-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/03/12/active_support_backtrace/">ActiveSupport BacktraceCleaner</a>
-
-		  <p class="footnote">
-			<time datetime="03-12-2015T11:47:06Z">03-12-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/03/06/angular_best_practices/">Angular Best Practices</a>
-
-		  <p class="footnote">
-			<time datetime="03-06-2015T11:47:06Z">03-06-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/03/03/active_support_concern/">ActiveSupport Concern</a>
-
-		  <p class="footnote">
-			<time datetime="03-03-2015T11:47:06Z">03-03-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/02/27/active_support_get_controller_everywhere/">ActiveSupport PerThreadRegistry：Get Controller Everywhere</a>
-
-		  <p class="footnote">
-			<time datetime="02-27-2015T11:47:06Z">02-27-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/02/23/active_support_notifications/">ActiveSupport Notifications</a>
-
-		  <p class="footnote">
-			<time datetime="02-23-2015T11:47:06Z">02-23-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/02/22/active_support_aliasing/">ActiveSupport Aliasing</a>
-
-		  <p class="footnote">
-			<time datetime="02-22-2015T11:47:06Z">02-22-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/02/09/rails_gems_1/">Rails常用Gem</a>
-
-		  <p class="footnote">
-			<time datetime="02-09-2015T11:47:06Z">02-09-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/02/06/rails_test_details_2/">Rails Test Details 2: Model Test</a>
-
-		  <p class="footnote">
-			<time datetime="02-06-2015T11:47:06Z">02-06-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/02/05/rails_test_details_1/">Rails Test Details 1: Build Data</a>
-
-		  <p class="footnote">
-			<time datetime="02-05-2015T11:47:06Z">02-05-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/02/04/use_postgresql_uuid_in_rails/">Use Postgresql uuid in Rails</a>
-
-		  <p class="footnote">
-			<time datetime="02-04-2015T11:47:06Z">02-04-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2015/01/27/active_support_inflector/">ActiveSupport::Inflector</a>
-
-		  <p class="footnote">
-			<time datetime="01-27-2015T11:47:06Z">01-27-2015</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2014/12/01/i18n_with_rails_and_angular/">I18n with Rails and Angular</a>
-
-		  <p class="footnote">
-			<time datetime="12-01-2014T11:47:06Z">12-01-2014</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2014/02/18/active_support-configurable-in-rails/">ActiveSupport::Configurable</a>
-
-		  <p class="footnote">
-			<time datetime="02-18-2014T11:47:06Z">02-18-2014</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2014/02/07/custom-id-with-mongoid-in-rails/">自定义mongoid的model id</a>
-
-		  <p class="footnote">
-			<time datetime="02-07-2014T11:47:06Z">02-07-2014</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2014/01/22/long-weibo/">简单的长微博示例</a>
-
-		  <p class="footnote">
-			<time datetime="01-22-2014T11:47:06Z">01-22-2014</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2014/01/21/wkhtmltoimg-intro/">wkhtmltoimage简介</a>
-
-		  <p class="footnote">
-			<time datetime="01-21-2014T11:47:06Z">01-21-2014</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-		
-		<li>
-		  
-		  <a class="post-list" href="http://blog.jerry-tao.com/2014/01/20/ruby-std-lib-open3/">Ruby标准库学习：Open3</a>
-
-		  <p class="footnote">
-			<time datetime="01-20-2014T11:47:06Z">01-20-2014</time>
-
-			
-		  |	
-			
-
-			
-
-			
-			categories: [ <a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-			
-
-			
-
-		  </p>
-		</li>
-		
-		
-	  </ul>
-	</div>
+        <div class="post">
+
+            <div class="post-title">
+                <p class="footnote">
+                    <time class="">01-27-2015</time>
+		            
+                    
+                    |
+                    
+                    
+
+                    
+                    categories: [<a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
+                    
+
+                    
+                </p>
+                <h1>ActiveSupport::Inflector</h1>
+            </div>
+
+            <div class="post-content">
+                <p>inflector是active_support中的内容，用来处理应对不同需求的字符串。例如post -&gt; posts，post -&gt; Post post_controller-&gt;PostController等。</p>
+
+<p>所有跟inflector有关的文件都可以在activesupport/lib/inflector.rb里找到，所以你可以单独使用这个模块。</p>
+
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#75715e"># in case active_support/inflector is required without the rest of active_support</span>
+require <span style="color:#e6db74">&#39;active_support/inflector/inflections&#39;</span> <span style="color:#75715e"># 使用singleton模式定义了一个存储所有转换规则的空间。</span>
+require <span style="color:#e6db74">&#39;active_support/inflector/transliterate&#39;</span> <span style="color:#75715e"># 把非ASCII字符转换为ASCII字符还有把字符串转换成适合URL的格式。</span>
+require <span style="color:#e6db74">&#39;active_support/inflector/methods&#39;</span> <span style="color:#75715e"># 具体的转换方法。</span>
+
+require <span style="color:#e6db74">&#39;active_support/inflections&#39;</span> <span style="color:#75715e"># 内置的转换规则。</span>
+require <span style="color:#e6db74">&#39;active_support/core_ext/string/inflections&#39;</span> <span style="color:#75715e"># 扩展ruby的字符串。</span></code></pre></div>
+
+<p>先来看一下active_support/lib/inflector/inflections.rb里的几行关键代码：</p>
+
+<p><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#66d9ef">module</span> ActiveSupport
+  <span style="color:#66d9ef">module</span> Inflector
+    <span style="color:#66d9ef">extend</span> self
+    <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Inflections</span>
+      @__instance__ <span style="color:#f92672">=</span> <span style="color:#66d9ef">ThreadSafe</span><span style="color:#f92672">::</span><span style="color:#66d9ef">Cache</span><span style="color:#f92672">.</span>new <span style="color:#75715e">#定义一个存储空间</span>
+      <span style="color:#f92672">...</span>
+      <span style="color:#66d9ef">def</span> <span style="color:#a6e22e"></span><span style="color:#f92672"></span><span style="color:#a6e22e">initialize</span>
+        @plurals, @singulars, @uncountables, @humans, @acronyms, @acronym_regex <span style="color:#f92672">=</span> <span style="color:#f92672">[]</span>, <span style="color:#f92672">[]</span>, <span style="color:#f92672">[]</span>, <span style="color:#f92672">[]</span>, {}, <span style="color:#e6db74">/(?=a)b/</span>
+        <span style="color:#75715e">#定义各个规则的存储空间</span>
+        <span style="color:#75715e"># @plurals - 转换成复数的规则</span>
+        <span style="color:#75715e"># @singulars - 转换成单数的规则</span>
+        <span style="color:#75715e"># @uncountables - 不可数的单词</span>
+        <span style="color:#75715e"># @humans - 人性化的规则 the_title =&gt; the title</span>
+        <span style="color:#75715e"># @acronym_reges - 不标准的一些规则 例如 RESTFul</span>
+      <span style="color:#66d9ef">end</span>
+
+    <span style="color:#66d9ef">end</span>
+
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e"></span><span style="color:#f92672"></span><span style="color:#a6e22e">inflections</span>(locale <span style="color:#f92672">=</span> <span style="color:#e6db74">:en</span>)
+      <span style="color:#66d9ef">if</span> block_given?
+        <span style="color:#66d9ef">yield</span> <span style="color:#66d9ef">Inflections</span><span style="color:#f92672">.</span>instance(locale)
+      <span style="color:#66d9ef">else</span>
+        <span style="color:#66d9ef">Inflections</span><span style="color:#f92672">.</span>instance(locale)
+      <span style="color:#66d9ef">end</span>
+    <span style="color:#66d9ef">end</span>
+    <span style="color:#75715e"># 这个使用方法可以看一下</span>
+    <span style="color:#75715e"># ActiveSupport::Inflector.inflections(:en) do |inflect|</span>
+    <span style="color:#75715e">#   inflect.plural(/$/, &#39;s&#39;) # 添加一条复数规则</span>
+    <span style="color:#75715e"># end</span>
+  <span style="color:#66d9ef">end</span>
+<span style="color:#66d9ef">end</span></code></pre></div></p>
+
+<p>保存好之后在active_support/lib/inflections.rb里我们可以找到内置的规则，其中包括单复数不规则名词和不可数名词。</p>
+
+<p>然后在active_support/lib/inflector/methods.rb里面定义了各种方法，随便看一个pluralize的方法：</p>
+
+<p><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e"></span><span style="color:#f92672"></span><span style="color:#a6e22e">pluralize</span>(word, locale <span style="color:#f92672">=</span> <span style="color:#e6db74">:en</span>)
+  apply_inflections(word, inflections(locale)<span style="color:#f92672">.</span>plurals)
+<span style="color:#66d9ef">end</span>
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e"></span><span style="color:#f92672"></span><span style="color:#a6e22e">apply_inflections</span>(word, rules)
+  result <span style="color:#f92672">=</span> word<span style="color:#f92672">.</span>to_s<span style="color:#f92672">.</span>dup
+
+  <span style="color:#66d9ef">if</span> word<span style="color:#f92672">.</span>empty? <span style="color:#f92672">||</span> inflections<span style="color:#f92672">.</span>uncountables<span style="color:#f92672">.</span>include?(result<span style="color:#f92672">.</span>downcase<span style="color:#f92672">[</span><span style="color:#e6db74">/\b\w+\Z/</span><span style="color:#f92672">]</span>)
+    result
+  <span style="color:#66d9ef">else</span>
+    rules<span style="color:#f92672">.</span>each { <span style="color:#f92672">|</span>(rule, replacement)<span style="color:#f92672">|</span> <span style="color:#66d9ef">break</span> <span style="color:#66d9ef">if</span> result<span style="color:#f92672">.</span>sub!(rule, replacement) }
+    result
+  <span style="color:#66d9ef">end</span>
+<span style="color:#66d9ef">end</span></code></pre></div></p>
+
+<p>然后看一下active_support/lib/inflector/transliterate.rb，这里定义了两个方法：
+transliterate和parameterize:</p>
+
+<p><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby">transliterate(<span style="color:#e6db74">&#39;Ærøskøbing&#39;</span>)
+<span style="color:#75715e"># =&gt; &#34;AEroskobing&#34;</span>
+
+<span style="color:#e6db74">&#34;Donald E. Knuth&#34;</span><span style="color:#f92672">.</span>parameterize
+<span style="color:#75715e"># =&gt;&#34;donald-e-knuth&#34;</span></code></pre></div></p>
+
+<p>最后，整理一下inflector里常用的方法：</p>
+
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#e6db74">&#39;post&#39;</span><span style="color:#f92672">.</span>pluralize <span style="color:#75715e"># 复数</span>
+<span style="color:#75715e"># =&gt; &#34;posts&#34;</span>
+<span style="color:#e6db74">&#39;post&#39;</span><span style="color:#f92672">.</span>singularize <span style="color:#75715e"># 单数</span>
+<span style="color:#75715e"># =&gt; &#34;post&#34;</span>
+<span style="color:#e6db74">&#39;post_controller&#39;</span><span style="color:#f92672">.</span>camelize <span style="color:#75715e"># 驼峰</span>
+<span style="color:#75715e"># =&gt; &#34;PostController&#34;</span>
+<span style="color:#e6db74">&#39;PostController&#39;</span><span style="color:#f92672">.</span>underscore <span style="color:#75715e"># 下划线</span>
+<span style="color:#75715e"># =&gt; &#34;post_controller&#34;</span>
+<span style="color:#e6db74">&#39;post_controller&#39;</span><span style="color:#f92672">.</span>humanize <span style="color:#75715e"># 可读 首字母大写</span>
+<span style="color:#75715e"># =&gt; &#34;Post controller&#34;</span>
+<span style="color:#e6db74">&#39;post_controller&#39;</span><span style="color:#f92672">.</span>titleize
+<span style="color:#75715e"># =&gt; &#34;Post Controller&#34; # 标题适用</span>
+<span style="color:#e6db74">&#39;Post&#39;</span><span style="color:#f92672">.</span>tableize <span style="color:#75715e"># 建表适用</span>
+<span style="color:#75715e"># =&gt; &#34;posts&#34;</span>
+<span style="color:#e6db74">&#39;post_controller&#39;</span><span style="color:#f92672">.</span>classify <span style="color:#75715e"># 类名适用</span>
+<span style="color:#75715e"># =&gt; &#34;PostController&#34;</span>
+<span style="color:#e6db74">&#39;post_controller&#39;</span><span style="color:#f92672">.</span>dasherize <span style="color:#75715e"># 替换成-</span>
+<span style="color:#75715e"># =&gt; &#34;post-controller&#34;</span>
+<span style="color:#e6db74">&#39;ActiveRecord::Base&#39;</span><span style="color:#f92672">.</span>demodulize <span style="color:#75715e"># 去模块化</span>
+<span style="color:#75715e"># =&gt; &#34;Base&#34;</span>
+<span style="color:#e6db74">&#39;ActiveRecord::Base&#39;</span><span style="color:#f92672">.</span>deconstantize <span style="color:#75715e"># 去常量化</span>
+<span style="color:#75715e"># =&gt;&#34;ActiveRecord&#34;</span>
+<span style="color:#e6db74">&#39;Post&#39;</span><span style="color:#f92672">.</span>foreign_key <span style="color:#75715e"># 生成外键</span>
+<span style="color:#75715e"># =&gt; &#34;post_id&#34;</span>
+<span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Post</span>
+<span style="color:#66d9ef">end</span>  
+<span style="color:#e6db74">&#39;Post&#39;</span><span style="color:#f92672">.</span>constantize <span style="color:#75715e"># 查找一个常量 不存在会报错</span>
+<span style="color:#75715e"># =&gt;Post</span>
+<span style="color:#e6db74">&#39;Post&#39;</span><span style="color:#f92672">.</span>safe_constantize <span style="color:#75715e"># 同上 不存在nil</span>
+<span style="color:#75715e"># =&gt;Post</span>
+<span style="color:#ae81ff">1</span><span style="color:#f92672">.</span>ordinalize <span style="color:#75715e"># 把数字变成1st的模式</span>
+<span style="color:#75715e"># =&gt;&#39;1st&#39;</span></code></pre></div>
+
+            </div>
+        </div>
 	</div>
     <div class="pure-u-1-24 pure-u-md-1-6"></div>
 </div>
@@ -1233,7 +538,7 @@ body {
 
         </ul>
         <a href="#" class="pure-menu-link pull-right" id="gototop-btn">↑↑</a>
-        <a href="http://blog.jerry-tao.com/index.xml" class="pure-menu-link pull-right">RSS</a>
+        <a href="" class="pure-menu-link pull-right">RSS</a>
       </div>
       
       <p id="foot-copyright">(c) 2013 -- 2017</p>
