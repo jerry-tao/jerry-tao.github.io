@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Go on Jerry Tao</title>
+    <link>http://blog.jerry-tao.com/categories/go/</link>
+    <description>Recent content in Go on Jerry Tao</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-CN</language>
+    <copyright>(c) 2013 -- 2017</copyright>
+    <lastBuildDate>Wed, 28 Feb 2018 14:15:36 +0800</lastBuildDate>
+    
+	<atom:link href="http://blog.jerry-tao.com/categories/go/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Go Liveload With Docker And Gin</title>
+      <link>http://blog.jerry-tao.com/2018/02/28/go-liveload/</link>
+      <pubDate>Wed, 28 Feb 2018 14:15:36 +0800</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2018/02/28/go-liveload/</guid>
+      <description>Just like ruby on rails, liveload changes.
+# Dockerfile FROM golang:1.9.1 # Install dep RUN curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh WORKDIR /go/src/APP ADD Gopkg.toml Gopkg.toml ADD Gopkg.lock Gopkg.lock RUN dep ensure -vendor-only # Install gin RUN go get github.com/codegangsta/gin COPY ./src ./src WORKDIR /go/src/APP/src # App listen on 8888, gin proxy listen on 3000 EXPOSE 3000 CMD [&amp;quot;gin&amp;quot;,&amp;quot;-i&amp;quot;,&amp;quot;-a&amp;quot;,&amp;quot;8888&amp;quot;,&amp;quot;run&amp;quot;]  # docker-compose-dev.yml version: &#39;2.1&#39; services: app: build: . command: gin -i -a 8888 run ports: - &amp;quot;127.</description>
+    </item>
+    
+  </channel>
+</rss>

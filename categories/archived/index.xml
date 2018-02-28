@@ -587,7 +587,7 @@ class Setting include ActiveSupport::Configurable end Setting.config.send_mail=t
       
       <guid>http://blog.jerry-tao.com/2014/02/07/custom-id-with-mongoid-in-rails/</guid>
       <description>如果在rails使用mongoid，在返回json的时候会有个小问题，就是id格式会如下：
-{ &amp;#34;code&amp;#34;: 200, &amp;#34;data&amp;#34;: [ { &amp;#34;id&amp;#34;: { &amp;#34;$oid&amp;#34;: &amp;#34;52f472cc6a65721a2f000000&amp;#34; }, &amp;#34;name&amp;#34;: &amp;#34;abc&amp;#34; } ] } 过去是用如下代码修改：
+{ &amp;#34;code&amp;#34;: 200, &amp;#34;data&amp;#34;: [ { &amp;#34;id&amp;#34;: { &amp;#34;$oid&amp;#34;: &amp;#34;52f472cc6a65721a2f000000&amp;#34; }, &amp;#34;name&amp;#34;: &amp;#34;abc&amp;#34; } ] }  过去是用如下代码修改：
 Moped::BSON::ObjectId.class_eval do def to_json(*args) to_s.to_json end #Jbuilder使用的to json策略 def as_json(*args) to_s.as_json end end
 如果用的是git上最新的mongoid代码，BSON是在mongoid自己的extensions里的，所以修改如下：
 BSON::ObjectId.class_eval do def to_json(*args) to_s.to_json end #Jbuilder使用的to json策略 def as_json(*args) to_s.as_json end end
@@ -604,7 +604,7 @@ BSON::ObjectId.class_eval do def to_json(*args) to_s.to_json end #Jbuilder使用
       <description>长微博就是把文字转换成图片，主要用到的gem是imgkit。
 imgkit是一个通过open3来调用wkhtmltoimage生成图片的gem，源码不是很复杂，使用也很简单。
 基本步骤如下：
-rails new long-weibo #Add imgkit and carrierwave to Gemfile and run bundle rails g model weibo weibo:string image:string rake db:migrate rails g controller home index create 修改一下routes.rb post &amp;#34;create&amp;#34; =&amp;gt;&amp;#39;home#create&amp;#39; root &amp;#39;home#index&amp;#39; 写个简单的界面home/index.html.erb &amp;lt;textarea id=&amp;#34;content&amp;#34; name=&amp;#34;content&amp;#34;&amp;gt; &amp;lt;/textarea&amp;gt; &amp;lt;a id=&amp;#34;create&amp;#34; href=&amp;#34;#create&amp;#34;&amp;gt;Create&amp;lt;/a&amp;gt; &amp;lt;div id=&amp;#34;image&amp;#34;&amp;gt; &amp;lt;/div&amp;gt; 写段简单的js $(function(){ $(&amp;#34;#create&amp;#34;).click(function(){ var content = $(&amp;#34;#content&amp;#34;).val(); $.post(&amp;#34;/create&amp;#34;,{content:content},function(returnData){ $(&amp;#34;#image&amp;#34;).html(&amp;#34;&amp;lt;img src=&amp;#39;&amp;#34;+returnData+&amp;#34;&amp;#39;&amp;gt;&amp;#34;); }); }); }); 把controller改改 def index end def create @weibo = Weibo.create(weibo:params[:content]) render :text=&amp;gt;&amp;#34;#{@weibo.image.url}&amp;#34; end 把model改改 class Weibo &amp;lt; ActiveRecord::Base after_create :generate_image mount_uploader :image,ImageUploader private def generate_image file = Tempfile.</description>
+rails new long-weibo #Add imgkit and carrierwave to Gemfile and run bundle rails g model weibo weibo:string image:string rake db:migrate rails g controller home index create 修改一下routes.rb post &amp;#34;create&amp;#34; =&amp;gt;&amp;#39;home#create&amp;#39; root &amp;#39;home#index&amp;#39; 写个简单的界面home/index.html.erb &amp;lt;textarea id=&amp;#34;content&amp;#34; name=&amp;#34;content&amp;#34;&amp;gt; &amp;lt;/textarea&amp;gt; &amp;lt;a id=&amp;#34;create&amp;#34; href=&amp;#34;#create&amp;#34;&amp;gt;Create&amp;lt;/a&amp;gt; &amp;lt;div id=&amp;#34;image&amp;#34;&amp;gt; &amp;lt;/div&amp;gt; 写段简单的js $(function(){ $(&amp;#34;#create&amp;#34;).click(function(){ var content = $(&amp;#34;#content&amp;#34;).val(); $.post(&amp;#34;/create&amp;#34;,{content:content},function(returnData){ $(&amp;#34;#image&amp;#34;).html(&amp;#34;&amp;lt;img src=&amp;#39;&amp;#34;+returnData+&amp;#34;&amp;#39;&amp;gt;&amp;#34;); }); }); });  把controller改改 def index end def create @weibo = Weibo.create(weibo:params[:content]) render :text=&amp;gt;&amp;#34;#{@weibo.</description>
     </item>
     
     <item>
