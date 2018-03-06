@@ -3,8 +3,8 @@
 <head>
   
   <meta charset="utf-8">
-  <title>Posts</title>
-  <meta name="description" content="Posts">
+  <title>Json In Go</title>
+  <meta name="description" content="Json In Go">
   <meta name="author" content="">
   
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -337,8 +337,6 @@ body {
 
   
   
-  <link href="http://blog.jerry-tao.com/posts/index.xml" rel="alternate" type="application/rss+xml" title="Jerry Tao Feed" />
-  
 
   <meta name="generator" content="Hugo 0.37" />
 
@@ -396,485 +394,194 @@ body {
 </div>
 
 
-
 <div class="pure-g">
   <div class="pure-u-1-24 pure-u-md-1-6"></div>
   <div class="pure-u-11-12 pure-u-md-2-3">
-    <div class="post-content">
-      <p class="posts-name">Posts:</p>
+    <div class="post">
 
-      <ul class="posts">
+      <div class="post-title">
+        <p class="footnote">
+        <time class="">03-06-2018</time>
         
         
+        |
         
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2018/03/06/json-in-go/">Json In Go</a>
+        
 
-          <p class="footnote">
-          <time datetime="03-06-2018">
-            03-06-2018
-          </time>
-          </p>
-        </li>
         
+        categories: [<a href="http://blog.jerry-tao.com/categories/go">Go</a> ]
         
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2018/02/28/go-liveload/">Go Liveload With Docker And Gin</a>
 
-          <p class="footnote">
-          <time datetime="02-28-2018">
-            02-28-2018
-          </time>
-          </p>
-        </li>
         
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2017/08/08/ruby_process/">Ruby Process</a>
+        </p>
+        <h1>Json In Go</h1>
+      </div>
 
-          <p class="footnote">
-          <time datetime="08-08-2017">
-            08-08-2017
-          </time>
-          </p>
-        </li>
+      <div class="post-content">
         
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2017/03/16/cache_cluster_in_ruby_demo/">杂七杂八的缓存</a>
 
-          <p class="footnote">
-          <time datetime="03-16-2017">
-            03-16-2017
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2017/03/08/gateway_in_mruby/">实现一个简单的Gateway</a>
+<h2 id="to-json">To Json:</h2>
 
-          <p class="footnote">
-          <time datetime="03-08-2017">
-            03-08-2017
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2017/02/22/rails_routes_2/">Rails Routes 源码(2)</a>
+<pre><code class="language-go">type Address struct {
+	Province string
+	City     string
+	Phone    string
+}
 
-          <p class="footnote">
-          <time datetime="02-22-2017">
-            02-22-2017
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2017/02/15/rails_routes_1/">Rails Routes 源码(1)</a>
+func (a *Address) MarshalJSON() ([]byte, error) {
+	return []byte(`&quot;` + a.Province + &quot; &quot; + a.City + `&quot;`), nil
+}
 
-          <p class="footnote">
-          <time datetime="02-15-2017">
-            02-15-2017
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2017/02/07/load_balance/">Load Balance简介</a>
+type User struct {
+	Name     string                          // Default will be Name
+	Username string `json:&quot;username&quot;`        // Custom json key
+	Password string `json:“-”`               // Don't include in json
+	Image    string `json:&quot;image,omitempty&quot;` // Don't include in json if empty
+	Address  Address                         // Custom type with custom json
+}
 
-          <p class="footnote">
-          <time datetime="02-07-2017">
-            02-07-2017
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2017/02/03/http2/">HTTP2简介</a>
+// Fully custom MarshalJSON()
+func (u *User) MarshalJSON() ([]byte, error) {
+	type wrapper User
+	return json.Marshal(&amp;struct {
+		*wrapper
+		Phone string `json:&quot;phone&quot;`
+	}{
+		wrapper: (*wrapper)(u),
+		Phone:   u.Address.Phone,
+	})
+}
 
-          <p class="footnote">
-          <time datetime="02-03-2017">
-            02-03-2017
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2016/09/09/lazy_hash/">使用延迟加载来优化redis请求</a>
+//func (u User) MarshalJSON() ([]byte, error) {
+//
+//}
+func main() {
+	// with empty image
+	user1 := User{
+		Name:     &quot;User&quot;,
+		Username: &quot;Username&quot;,
+		Password: &quot;Password&quot;,
+		Image:    &quot;&quot;,
+		Address: Address{
+			Province: &quot;Province&quot;,
+			City:     &quot;City&quot;,
+			Phone:    &quot;aaaaa&quot;,
+		},
+	}
+	// with image
+	user2 := User{
+		Name:     &quot;User&quot;,
+		Username: &quot;Username&quot;,
+		Password: &quot;Password&quot;,
+		Image:    &quot;image.png&quot;,
+		Address: Address{
+			Province: &quot;Province&quot;,
+			City:     &quot;City&quot;,
+			Phone:    &quot;aaaaa&quot;,
+		},
+	}
+	//Notice: The difference between Pointer and Value function
+	json1, _ := json.Marshal(user1)
+	json2, _ := json.Marshal(&amp;user1)
+	json3, _ := json.Marshal(user2)
+	json4, _ := json.Marshal(&amp;user2)
 
-          <p class="footnote">
-          <time datetime="09-09-2016">
-            09-09-2016
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2016/09/05/redis_ziplist/">Redis Ziplist总结</a>
+	// No phone field
+	fmt.Println(string(json1))
+	// Out: {&quot;Name&quot;:&quot;User&quot;,&quot;username&quot;:&quot;Username&quot;,&quot;Password&quot;:&quot;Password&quot;,&quot;Address&quot;:{&quot;Province&quot;:&quot;Province&quot;,&quot;City&quot;:&quot;City&quot;,&quot;Phone&quot;:&quot;aaaaa&quot;}}
 
-          <p class="footnote">
-          <time datetime="09-05-2016">
-            09-05-2016
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2016/03/15/order_no_demo/">高并发订单号池</a>
+	// With phone field
+	fmt.Println(string(json2))
+	// Out: {&quot;Name&quot;:&quot;User&quot;,&quot;username&quot;:&quot;Username&quot;,&quot;Password&quot;:&quot;Password&quot;,&quot;Address&quot;:&quot;Province City&quot;,&quot;phone&quot;:&quot;aaaaa&quot;}
 
-          <p class="footnote">
-          <time datetime="03-15-2016">
-            03-15-2016
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2016/01/14/singleton_class_for_dummy/">Singleton Class简明教程</a>
+	fmt.Println(string(json3))
+	// Out: {&quot;Name&quot;:&quot;User&quot;, &quot;username&quot;:&quot;Username&quot;, &quot;Password&quot;:&quot;Password&quot;, &quot;image&quot;:&quot;image.png&quot;, &quot;Address&quot;:{&quot;Province&quot;:&quot;Province&quot;, &quot;City&quot;:&quot;City&quot;, &quot;Phone&quot;:&quot;aaaaa&quot;}}
+	fmt.Println(string(json4))
+	// Out: {&quot;Name&quot;:&quot;User&quot;, &quot;username&quot;:&quot;Username&quot;, &quot;Password&quot;:&quot;Password&quot;, &quot;image&quot;:&quot;image.png&quot;, &quot;Address&quot;:&quot;Province City&quot;,&quot;phone&quot;:&quot;aaaaa&quot;}
 
-          <p class="footnote">
-          <time datetime="01-14-2016">
-            01-14-2016
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2016/01/13/ruby_hook_methods/">Ruby Hook Methods</a>
+	// Write directly to io
+	encoder := json.NewEncoder(os.Stdout)
+	encoder.Encode(user1)
+	encoder.Encode(&amp;user1)
+	encoder.Encode(user2)
+	encoder.Encode(&amp;user2)
+}
+</code></pre>
 
-          <p class="footnote">
-          <time datetime="01-13-2016">
-            01-13-2016
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2016/01/12/load_code_in_ruby/">Ruby加载代码的二三事</a>
+<p>From Json:</p>
 
-          <p class="footnote">
-          <time datetime="01-12-2016">
-            01-12-2016
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2016/01/11/all_about_const_lookup/">关于Constant查找的一切(译)</a>
+<pre><code class="language-go">
+type Address struct {
+	Province string
+	City     string
+	Phone    string
+}
 
-          <p class="footnote">
-          <time datetime="01-11-2016">
-            01-11-2016
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2015/09/29/rails_log_process/">Rails Log Process</a>
+type User struct {
+	Name     string                          // Default will be Name
+	Username string `json:&quot;username&quot;`        // Custom json key
+	Password string `json:“-”`               // Useless on unmarshal
+	Image    string `json:&quot;image,omitempty&quot;` // Useless on unmarshal
+	Address  Address                         // Custom type with custom json
+}
 
-          <p class="footnote">
-          <time datetime="09-29-2015">
-            09-29-2015
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2015/08/14/move_development_to_docer/">Move Rails Development to Docker</a>
+func main() {
 
-          <p class="footnote">
-          <time datetime="08-14-2015">
-            08-14-2015
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2015/05/06/a_little_piece_code_in_action_controller/">A Little Piece Code in ActionController</a>
+	json1 := []byte(`{&quot;Name&quot;:&quot;User&quot;,&quot;username&quot;:&quot;Username&quot;,&quot;Password&quot;:&quot;Password&quot;,&quot;image&quot;:&quot;image.png&quot;,&quot;Address&quot;:&quot;Province City&quot;,&quot;phone&quot;:&quot;aaaaa&quot;}`)
+	json2 := []byte(`[{&quot;Name&quot;:&quot;User&quot;,&quot;username&quot;:&quot;Username&quot;,&quot;Password&quot;:&quot;Password&quot;,&quot;image&quot;:&quot;image.png&quot;,&quot;Address&quot;:&quot;Province City&quot;,&quot;phone&quot;:&quot;aaaaa&quot;},{&quot;Name&quot;:&quot;User&quot;,&quot;username&quot;:&quot;Username&quot;,&quot;Password&quot;:&quot;Password&quot;,&quot;image&quot;:&quot;image.png&quot;,&quot;Address&quot;:&quot;Province City&quot;,&quot;phone&quot;:&quot;aaaaa&quot;}]`)
 
-          <p class="footnote">
-          <time datetime="05-06-2015">
-            05-06-2015
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2015/03/12/active_support_backtrace/">ActiveSupport BacktraceCleaner</a>
+	json3 := []byte(`{&quot;Name&quot;:&quot;User&quot;,&quot;username&quot;:&quot;Username&quot;,&quot;Password&quot;:&quot;Password1&quot;,&quot;Image&quot;:&quot;Ima.png&quot;,&quot;Address&quot;:{&quot;Province&quot;:&quot;Province&quot;,&quot;City&quot;:&quot;City&quot;,&quot;Phone&quot;:&quot;aaaaa&quot;}}`)
 
-          <p class="footnote">
-          <time datetime="03-12-2015">
-            03-12-2015
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2015/03/06/angular_best_practices/">Angular Best Practices</a>
+	// map[string]interface{} &amp; []map[string]interface{}
+	var result1 map[string]interface{}
+	var result2 []map[string]interface{}
 
-          <p class="footnote">
-          <time datetime="03-06-2015">
-            03-06-2015
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2015/03/03/active_support_concern/">ActiveSupport Concern</a>
+	json.Unmarshal(json1, &amp;result1)
+	json.Unmarshal(json2, &amp;result2)
 
-          <p class="footnote">
-          <time datetime="03-03-2015">
-            03-03-2015
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2015/02/27/active_support_get_controller_everywhere/">ActiveSupport PerThreadRegistry：Get Controller Everywhere</a>
+	// dealing with json in json
+	// {&quot;address&quot;:{&quot;province&quot;:&quot;Province&quot;}}
+	// result[&quot;address&quot;].(map[string]interface{})
 
-          <p class="footnote">
-          <time datetime="02-27-2015">
-            02-27-2015
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2015/02/23/active_support_notifications/">ActiveSupport Notifications</a>
+	// dealing with array
+	// {&quot;addresses&quot;:[{{&quot;province&quot;:&quot;Province&quot;, code:200}},{&quot;province&quot;:&quot;Province&quot;, code:200}]}
+	// result[&quot;address&quot;].([]map[string]interfacee{})
 
-          <p class="footnote">
-          <time datetime="02-23-2015">
-            02-23-2015
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2015/02/22/active_support_aliasing/">ActiveSupport Aliasing</a>
+	// struct
 
-          <p class="footnote">
-          <time datetime="02-22-2015">
-            02-22-2015
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2015/02/09/rails_gems_1/">Rails常用Gem</a>
+	// Notice: Username field, the username and Username are both valid key.
+	var user User
+	json.Unmarshal(json3, &amp;user)
 
-          <p class="footnote">
-          <time datetime="02-09-2015">
-            02-09-2015
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2015/02/06/rails_test_details_2/">Rails Test Details 2: Model Test</a>
+	// From io.Reader
+	decoder := json.NewDecoder(bytes.NewReader(json3))
+	decoder.Decode(&amp;user)
 
-          <p class="footnote">
-          <time datetime="02-06-2015">
-            02-06-2015
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2015/02/05/rails_test_details_1/">Rails Test Details 1: Build Data</a>
+}
 
-          <p class="footnote">
-          <time datetime="02-05-2015">
-            02-05-2015
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2015/02/04/use_postgresql_uuid_in_rails/">Use Postgresql uuid in Rails</a>
+// fully custom
+func (u *User) UnmarshalJSON(jsonBytes []byte) error {
+	var result map[string]interface{}
+	json.Unmarshal(jsonBytes, &amp;result)
+	// then you can do everything you want
+	//
+	// custom type
+	// u.Address = Address{
+	//   Province:result[&quot;Province&quot;].(string),
+	// }
 
-          <p class="footnote">
-          <time datetime="02-04-2015">
-            02-04-2015
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2015/01/27/active_support_inflector/">ActiveSupport::Inflector</a>
+	// enum type
+	// if result[&quot;type&quot;].(string) != &quot;ValidA&quot; { return errors.New(&quot;Invalid type&quot;) }
+	//
+	// custom datetime
+	// time.Parse(format, result[&quot;time&quot;].(string))
 
-          <p class="footnote">
-          <time datetime="01-27-2015">
-            01-27-2015
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2014/12/01/i18n_with_rails_and_angular/">I18n with Rails and Angular</a>
+	return nil
+}
 
-          <p class="footnote">
-          <time datetime="12-01-2014">
-            12-01-2014
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2014/02/18/active_support-configurable-in-rails/">ActiveSupport::Configurable</a>
+</code></pre>
 
-          <p class="footnote">
-          <time datetime="02-18-2014">
-            02-18-2014
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2014/02/07/custom-id-with-mongoid-in-rails/">自定义mongoid的model id</a>
-
-          <p class="footnote">
-          <time datetime="02-07-2014">
-            02-07-2014
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2014/01/22/long-weibo/">简单的长微博示例</a>
-
-          <p class="footnote">
-          <time datetime="01-22-2014">
-            01-22-2014
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2014/01/21/wkhtmltoimg-intro/">wkhtmltoimage简介</a>
-
-          <p class="footnote">
-          <time datetime="01-21-2014">
-            01-21-2014
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2014/01/20/ruby-std-lib-open3/">Ruby标准库学习：Open3</a>
-
-          <p class="footnote">
-          <time datetime="01-20-2014">
-            01-20-2014
-          </time>
-          </p>
-        </li>
-        
-        
-      </ul>
+      </div>
     </div>
   </div>
   <div class="pure-u-1-24 pure-u-md-1-6"></div>
@@ -896,7 +603,7 @@ body {
 
         </ul>
         <a href="#" class="pure-menu-link pull-right" id="gototop-btn">↑↑</a>
-        <a href="http://blog.jerry-tao.com/posts/index.xml" class="pure-menu-link pull-right">RSS</a>
+        <a href="" class="pure-menu-link pull-right">RSS</a>
       </div>
       
       <p id="foot-copyright">(c) 2013 -- 2017</p>
