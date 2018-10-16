@@ -3,8 +3,8 @@
 <head>
   
   <meta charset="utf-8">
-  <title>Load Balance简介</title>
-  <meta name="description" content="Load Balance简介">
+  <title>Devops</title>
+  <meta name="description" content="Devops">
   <meta name="author" content="">
   
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -337,6 +337,8 @@ body {
 
   
   
+  <link href="http://blog.jerry-tao.com/categories/devops/index.xml" rel="alternate" type="application/rss+xml" title="Jerry Tao Feed" />
+  
 
   <meta name="generator" content="Hugo 0.37" />
 
@@ -410,131 +412,30 @@ body {
 </div>
 
 
+
 <div class="pure-g">
   <div class="pure-u-1-24 pure-u-md-1-6"></div>
   <div class="pure-u-11-12 pure-u-md-2-3">
-    <div class="post">
+    <div class="post-content">
+      <p class="posts-name">Devops:</p>
 
-      <div class="post-title">
-        <p class="footnote">
-        <time class="">02-07-2017</time>
+      <ul class="posts">
         
         
-        |
+        
+        <li>
+          
+          <a class="post-list" href="http://blog.jerry-tao.com/2018/10/15/devauto/">测试环境的自动化处理</a>
+
+          <p class="footnote">
+          <time datetime="10-15-2018">
+            10-15-2018
+          </time>
+          </p>
+        </li>
         
         
-
-        
-        categories: [<a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-        
-
-        
-        </p>
-        <h1>Load Balance简介</h1>
-      </div>
-
-      <div class="post-content">
-        
-
-<p>简单记录下Load Balance的基础知识。</p>
-
-<h2 id="1-load-balance方法">1. Load Balance方法</h2>
-
-<p><strong><em>HTTP反向代理负载均衡</em></strong></p>
-
-<p>这是我们最常见的一种，就是使用Nginx类的服务器在HTTP层面对后台应用服务器进行反向代理。</p>
-
-<p>优点：重点是简单，而且足以满足一般应用，所以实际上我们接触的比较多。</p>
-
-<p>缺点：主要是性能上会有压力，反向代理服务器本身的并发和吞吐能力都是有限的。</p>
-
-<p><strong><em>HTTP重定向负载均衡</em></strong></p>
-
-<p>请求服务器，由服务器计算合适的新的服务器用302重定向返回。</p>
-
-<p>这种代理方式缺点有很多，一次请求变成两次，而且用来重定向的服务器也需要来计算返回，并且不利于SEO的收集。</p>
-
-<p><strong><em>DNS负载均衡</em></strong></p>
-
-<p>这个一般在大型网站或者CDN服务提供商那里比较常见，主要是根据用户的IP就近指向的最近的机房IP。</p>
-
-<p>优点：解决由机房物理距离过远带来的延迟。</p>
-
-<p>缺点：成本高，DNS有缓存，IP变化很危险。</p>
-
-<p><strong><em>TCP负载均衡</em></strong></p>
-
-<p>反向代理主要是发生在HTTP层的中间代理，可以把这个转发过程下降到TCP，这一层的典型代表应该是HAProxy了。</p>
-
-<p>优点：除了由应用层下降到TCP层带来的性能优势之外，对IP数据包进行转发还有一个优势是除了HTTP协议还可以对其他协议进行负载均衡，例如数据库连接，redis连接这种。</p>
-
-<p>缺点：实际上本质问题和HTTP反向代理是一样的，那就是说所有的流量都会经过代理服务器，对代理服务器还是有一定的要求的。</p>
-
-<p><strong><em>链路层负载均衡</em></strong></p>
-
-<p>这个是又下降了，按OSI模型来说应该是第二层的协议，主流代表是LVS。这个的模型跟其他的模型有些不一样，其他的请求和返回的流量都要经过中间的代理服务器。而这个只有请求的流量会经过代理服务器，返回的流量可以直接返回到客户端。</p>
-
-<p>优点：性能基本是几种方案里面最好的。</p>
-
-<p>缺点：过于底层实际上对使用人员有一定的要求的，例如Nginx的反向代理基本上不需要掌握太多的网络知识，如果想使用LVS可能要多了解一些相关内容。</p>
-
-<h2 id="2-load-balance算法">2. Load Balance算法</h2>
-
-<p><strong><em>轮询</em></strong></p>
-
-<p>轮询就是从上到下依次派发请求，而且由基本的轮询还衍生出一种加权轮询。以nginx为例：</p>
-
-<p>例如IP为101的机器性能比较好，可以把更多的请求分配到101上。</p>
-
-<pre><code># 轮询
-
-upstream app {
-    server 192.168.1.101;
-    server 192.168.1.102;
-    server 192.168.1.103;
-}
-
-# 加权轮询
-upstream app {
-    server 192.168.1.101 weight=3;
-    server 192.168.1.102;
-    server 192.168.1.103;
-}
-</code></pre>
-
-<p>在上面的加权轮询过程中 如果有6个请求会依照101，101，101，102，103的顺序派发。</p>
-
-<p><strong><em>最少连接</em></strong></p>
-
-<p>根据后端服务器连接数最少进行选择，还是以nginx为例：</p>
-
-<pre><code>upstream app {
-    least_conn;
-    server 192.168.1.101;
-    server 192.168.1.102;
-    server 192.168.1.103;
-}
-</code></pre>
-
-<p><strong><em>hash</em></strong></p>
-
-<p>根据请求的某些特征值进行hash运算来达到把一个人的请求分配到同一台服务器上的算法，例如在app内保存session这种应用是很有必要的。</p>
-
-<p>（当然在app内保存session并不好，这样就让app有了状态，无状态的app会有更好的伸缩性。）</p>
-
-<p>nginx本身默认只支持对请求的ip进行hash运算，淘宝的tengine支持包括对更多参数的hash算法。</p>
-
-<pre><code>upstream myapp1 {
-    ip_hash;
-    server srv1.example.com;
-    server srv2.example.com;
-    server srv3.example.com;
-}
-</code></pre>
-
-<p>其他几种常见的负载均衡技术包括HAProxy，LVS和keepalived都值得看一下，额外的说一句，nginx plus也是支持TCP层的负载均衡的，不过是收费服务了。</p>
-
-      </div>
+      </ul>
     </div>
   </div>
   <div class="pure-u-1-24 pure-u-md-1-6"></div>
@@ -556,7 +457,7 @@ upstream app {
 
         </ul>
         <a href="#" class="pure-menu-link pull-right" id="gototop-btn">↑↑</a>
-        <a href="" class="pure-menu-link pull-right">RSS</a>
+        <a href="http://blog.jerry-tao.com/categories/devops/index.xml" class="pure-menu-link pull-right">RSS</a>
       </div>
       
       <p id="foot-copyright">(c) 2013 -- 2017</p>

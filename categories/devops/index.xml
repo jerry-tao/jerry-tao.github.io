@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Devops on Jerry Tao</title>
+    <link>http://blog.jerry-tao.com/categories/devops/</link>
+    <description>Recent content in Devops on Jerry Tao</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-CN</language>
+    <copyright>(c) 2013 -- 2017</copyright>
+    <lastBuildDate>Mon, 15 Oct 2018 14:15:36 +0800</lastBuildDate>
+    
+	<atom:link href="http://blog.jerry-tao.com/categories/devops/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>测试环境的自动化处理</title>
+      <link>http://blog.jerry-tao.com/2018/10/15/devauto/</link>
+      <pubDate>Mon, 15 Oct 2018 14:15:36 +0800</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2018/10/15/devauto/</guid>
+      <description>0. Intro 先介绍问题，现在开发往往都是基于git的vcs，然后很多小公司并没有完整的CI/CD工具和独立的测试团队，再加上一些历史问题，所以往往会产生一种开发完只能在测试服务器上测试页面效果的流程。
+为了应对这种流程不同的公司也有不同的套路，首先是基于git branch的开发，但是因为测试服务器往往数量有限，所以可能会出现要等待另一个人测试完成的情况。还有一些公司更简单，想测试的时候就把未开发完成想看看效果的代码先合并到develop分支进行部署，这种情况往往会搞到git history很糟糕还有就是容易搞崩测试服务器。
+1. 解决 其实在docker如此方便的时候处理这种情况已经很简单了，我们可以自己开发个简单的系统来处理一下：
+ 提交代码到git同时在commit message里包含@staging 代码库触发webhook到我们自己的系统 我们系统检出相关代码并启动一个container来运行，同时自动绑定一个随机二级域名 动态代理随机域名  还可以做一些其他的自定义的功能：
+ 手动绑定测试二级域名到指定分支。 统计测试情况 收集测试log检测异常 可以用@remove触发删除  2. Gitlab Webhook gitlab的webhook可以有很多种触发，我们只需要选择push事件。
+ func webhook(w http.ResponseWriter, r *http.Request){ ... for _,v:=gitlabRequest[&amp;quot;commits&amp;quot;] { // 每个push webhook包含多个commit if strings.Contains(v[&amp;quot;message&amp;quot;],&amp;quot;@staging&amp;quot;) { if !utils.CheckDeployed(v){ // 检测有没有部署，可以通过commit id来判断 dc := storage.NewDeployContainer(v) // 先构建一个struct用来存储信息 storage可自行选择，包括redis，etcd，甚至用于测试的只写个结构体 workers.Push(workers.Job{ Key: &amp;quot;container.deploy&amp;quot;, Params: dc, } } } } ... }  3. Worker func (job Job)Run(){ .</description>
+    </item>
+    
+  </channel>
+</rss>
