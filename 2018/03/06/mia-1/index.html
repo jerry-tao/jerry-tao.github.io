@@ -3,8 +3,8 @@
 <head>
   
   <meta charset="utf-8">
-  <title>使用延迟加载来优化redis请求</title>
-  <meta name="description" content="使用延迟加载来优化redis请求">
+  <title>Microservice In Action: 从service开始</title>
+  <meta name="description" content="Microservice In Action: 从service开始">
   <meta name="author" content="">
   
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -409,7 +409,7 @@ body {
 
       <div class="post-title">
         <p class="footnote">
-        <time class="">09-09-2016</time>
+        <time class="">10-01-2018</time>
         
         
         |
@@ -417,102 +417,160 @@ body {
         
 
         
-        categories: [<a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
+        categories: [<a href="http://blog.jerry-tao.com/categories/microservice">Microservice</a> ]
         
 
         
         </p>
-        <h1>使用延迟加载来优化redis请求</h1>
+        <h1>Microservice In Action: 从service开始</h1>
       </div>
 
       <div class="post-content">
         
 
-<h2 id="background">Background</h2>
+<h2 id="0-intro">0. Intro</h2>
 
-<p>我们系统允许客户自己对页面进行编辑，基于liquid实现的，提供了一大堆变量以供在页面上显示。</p>
-
-<p>因为不确定客户会使用哪些变量，所以在渲染liquid之前就要把提供的对象都从redis里面提取出来准备好，但实际上也许只使用了其中一部分的一部分。而且由于每个页面都需要加载所有变量，对redis来说非常不友好（通信量过大）。</p>
-
-<h2 id="round-1">Round 1</h2>
-
-<p>一开始的思路是查看liquid用了哪些变量，然后只提取使用的变量，但是这样有两个问题：</p>
+<p>这一系列blog主要是介绍如何实现一个简单的微服务框架，主要参考的对象是go-kit，更多的关注是实现的具体细节，所以有两个问题不会涉及：</p>
 
 <ul>
-<li>不得不提前解析一次liquid，性能影响很大。</li>
-<li>除了liquid本身的语法，我们还自定义了一些其他的用法，还有页面之间的include，解析难度也比较大。</li>
+<li>Microservice vs Monolithic：这个话题已经太多了，从微服务出来的第一天关于这两者的对比就层出不穷。</li>
+<li>如何根据具体的业务划分微服务：其实这个才是微服务架构的核心，但是这个会依赖很多其他东西，比如具体的业务模型，团队水平等等，所以更多时候只能各自做取舍。</li>
 </ul>
 
-<p>放弃。</p>
+<p>因为主要的目的是介绍一个微服务框架的组成部分以及具体的实现，所以就使用一个简单的blog做example。</p>
 
-<h2 id="round-2">Round 2</h2>
+<h2 id="1-service">1. Service</h2>
 
-<p>仔细研究了一下liquid的render，实际上对变量的读取就是通过hash的key来实现的，并且通过测试修改hash.[]方法就可以做到自由控制变量的入口了。</p>
+<p>先简单写个基本的post service：</p>
 
-<p>所以改成了以lazy_hash的形式来读取redis，需要什么取什么。</p>
-
-<pre><code class="language-ruby">class LazyHash &lt; Hash
-  attr_accessor :default_key
-  def initialize(key)
-    default_key = key
-  end
-
-  def [](key)
-    result = super(key)
-    return result if result!=nil
-    result = $redis.hget(default_key, key)
-    self.[]=(key, result)
-  end
-end  
+<pre><code class="language-go">type Service interface{
+  Create(req Request)(Response)
+  Show(req Request)(Response)
+}
 </code></pre>
 
-<p>改动后可以达到需要key才去redis里面读，多次使用同一个key不需要每次都去读的效果。</p>
+<p>虽然作为微服务系统来说，可以很灵活的选择语言和实现，只需要统一通信层即可，不过在一定程度上的一致还是可以帮助我们减少工作量的。所以我们先定义一个service func的标准：</p>
 
-<h2 id="round-3">Round 3</h2>
-
-<p>但是在实际中发现liquid并没有渲染，binding进liquid发现liquid会使用key?对hash先判断一下key是否存在。于是继续修改如下</p>
-
-<pre><code class="language-ruby"># 追加方法
-  def key?(key)
-    self.[](key) != nil
-  end
+<pre><code class="language-go">type ServiceFunc func(Request) (Response)
 </code></pre>
 
-<p>到此基本已经达到目的了，不过还有一个小问题。</p>
+<p>这里的作用有点类似go-kit里面的endpoint，在go-kit的example中，是把service func跟endpoint分开实现的，service func完全自定义实现业务逻辑，使用endpoint包裹之后可以做中间层和对具体的传输协议做封装，不过这里暂时就只使用ServiceFunc来作为基础的标准。</p>
 
-<h2 id="round-4">Round 4</h2>
+<h2 id="2-request-response">2. Request &amp; Response</h2>
 
-<p>那就是用户在编辑liquid的时候可能为了测试会直接输出对象，例如：</p>
+<p>这里的Request和Response虽然是叫req/res，其实就是统一的作为service func 的输入和输出，统一格式便于传输层处理。</p>
 
-<pre><code>{ global_setting }
-
-{ global_setting | json }
+<pre><code class="language-go">type Request struct {
+	Method   string // 具体调用的方法
+	Protocol string // 传输层使用的协议
+	Payload     []byte // 具体的参数
+	TrackID       string // 用于在多个服务间追踪
+}
+type Response struct {
+	Data interface{} // 正常时返回的数据
+	Err  error // 出错时返回的报错
+}
 </code></pre>
 
-<p>为了应对这种情况还是要提供一些load!方法的：</p>
+<p>传输层的格式化主要使用json，这样在各个协议之间都比较轻松，不管是http还是rpc活着message bus，然后由于go作为一门强类型的语言，很难对参数做太多的统一处理，比如说下面格式的json：</p>
 
-<pre><code class="language-ruby">  def load!
-    merge!($redis.hgetall(default_key))
-  end
-  def inspect
-    load!
-    super
-  end
-
-  def to_s
-    load!
-    super
-  end
-
-  def to_json
-    load!
-    super
-  end
+<pre><code class="language-json">{
+  &quot;age&quot;: 25, // int 类型会被unmarshal成float64
+}
+{
+  &quot;phone&quot;:1889999222,// 如果不小心没有加双引号，这个phone也会默认unmarshal成float64
+}
 </code></pre>
 
-<p>至此基本优化完成，测试效果是redis的请求数量大概提升了一倍，但是总的带宽降低5倍以上。</p>
+<p>所以在这种情况下我们保留payload作为[]byte这样在具体的业务层就可以直接unmarshal进自定义的struct。</p>
 
-<p>这个其实没有通用性，只能说具体问题具体分析，只是作为一种优化思路提供。</p>
+<p>不过在很多时候，比如说请求show接口，往往只需要一个id作为参数，所以我们还是简单的写一个helper来帮助处理一下参数：</p>
+
+<pre><code class="language-go">func (r Request) ParseParams() (Params, error) {
+	params := Params{}
+	err := json.Unmarshal(r.Payload, &amp;params.V)
+	return params, err
+}
+
+
+type Params struct {
+	V   map[string]interface{}
+}
+
+func (params Params) String(key string) (string, error) {
+	if reflect.TypeOf(params.V[key]).Kind() == reflect.String {
+		return params.V[key].(string), nil
+	} else {
+    // 其实很难做自动cast这种事，因为没办法确认一整套规则，所以并没有处理任何自动cast格式
+		return &quot;&quot;, errors.New(key+&quot;type mismatch or value is nil&quot;)
+	}
+}
+
+func (params Params) Slice(key string) ([]interface{}, error) {...}
+
+func (params Params) Int(key string) (int, error) {...}
+
+func (params Params) Float64(key string) float64 {...}
+
+func (params Params) Map(key string) map[string]interface{} {...}
+
+func (params Params) Bool(key string) (b bool, ok bool) {...}
+</code></pre>
+
+<h2 id="3-impl">3. Impl</h2>
+
+<p>接下来对Service接口实现一下具体的内容</p>
+
+<pre><code class="language-go">type postService struct{}
+
+func (postService) Create(req Request) (res Response) {
+	var post Post
+	err := json.Unmarshal(req.Payload, &amp;post)
+	if err != nil {
+		res.Err = err
+		return
+	}
+	err = store.Save(&amp;post)
+	if err != nil {
+		res.Err = err
+		return
+	}
+	res.Data = post
+	return
+}
+func (postService) Show(req Request) (res Response) {
+	var post Post
+	params, err := req.ParseParams()
+	if err != nil {
+		res.Err = err
+		return
+	}
+	id, err := params.String(&quot;id&quot;)
+	if err != nil {
+		res.Err = err
+		return
+	}
+	store.First(id,&amp;post)
+	res.Data = post
+	return
+}
+</code></pre>
+
+<p>这里面的store是跟db或者其他存储沟通的一个接口，并不是微服务的一部分，之后还会介绍一下在微服务中处理数据的一些问题，不过跟具体的数据库沟通跟其他架构并无区别，根据自己喜好选择即可。</p>
+
+<h2 id="4-其他">4. 其他</h2>
+
+<p>在go-kit的demo中，go-kit是把具体的service func和endpoint分开的，当然也可以直接以endpoint作为service func，这样的好处是又抽象出了一层可以做一些其他的功能，而且在go-kit中是以endpoint作为基本单位的，也就是说可以根据不同的协议分开提供方法，比如说有5个endpoint，可以让4个支持http而最后一个只支持rpc。</p>
+
+<p>还有另一点对比就是其他几个微服务框架对于service参数的处理，主要有以下几种：</p>
+
+<ul>
+<li>使用自定义struct</li>
+<li>使用protobuf2定义</li>
+<li>根据顺序处理</li>
+</ul>
+
+<p>最后就是我们并没有对传输的内容进行验证，比如说必须有哪些field以及field具体的格式，这部分由业务逻辑自己判断处理。</p>
 
       </div>
     </div>

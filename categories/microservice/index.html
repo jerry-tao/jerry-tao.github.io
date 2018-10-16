@@ -3,8 +3,8 @@
 <head>
   
   <meta charset="utf-8">
-  <title>使用延迟加载来优化redis请求</title>
-  <meta name="description" content="使用延迟加载来优化redis请求">
+  <title>Microservice</title>
+  <meta name="description" content="Microservice">
   <meta name="author" content="">
   
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -337,6 +337,8 @@ body {
 
   
   
+  <link href="http://blog.jerry-tao.com/categories/microservice/index.xml" rel="alternate" type="application/rss+xml" title="Jerry Tao Feed" />
+  
 
   <meta name="generator" content="Hugo 0.37" />
 
@@ -402,119 +404,56 @@ body {
 </div>
 
 
+
 <div class="pure-g">
   <div class="pure-u-1-24 pure-u-md-1-6"></div>
   <div class="pure-u-11-12 pure-u-md-2-3">
-    <div class="post">
+    <div class="post-content">
+      <p class="posts-name">Microservice:</p>
 
-      <div class="post-title">
-        <p class="footnote">
-        <time class="">09-09-2016</time>
+      <ul class="posts">
         
         
-        |
+        
+        <li>
+          
+          <a class="post-list" href="http://blog.jerry-tao.com/2018/03/06/mia-3/">Microservice In Action: Transport(2)</a>
+
+          <p class="footnote">
+          <time datetime="10-03-2018">
+            10-03-2018
+          </time>
+          </p>
+        </li>
         
         
-
         
-        categories: [<a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
+        <li>
+          
+          <a class="post-list" href="http://blog.jerry-tao.com/2018/03/06/mia-2/">Microservice In Action: Transport(1)</a>
+
+          <p class="footnote">
+          <time datetime="10-02-2018">
+            10-02-2018
+          </time>
+          </p>
+        </li>
         
-
         
-        </p>
-        <h1>使用延迟加载来优化redis请求</h1>
-      </div>
-
-      <div class="post-content">
         
+        <li>
+          
+          <a class="post-list" href="http://blog.jerry-tao.com/2018/03/06/mia-1/">Microservice In Action: 从service开始</a>
 
-<h2 id="background">Background</h2>
-
-<p>我们系统允许客户自己对页面进行编辑，基于liquid实现的，提供了一大堆变量以供在页面上显示。</p>
-
-<p>因为不确定客户会使用哪些变量，所以在渲染liquid之前就要把提供的对象都从redis里面提取出来准备好，但实际上也许只使用了其中一部分的一部分。而且由于每个页面都需要加载所有变量，对redis来说非常不友好（通信量过大）。</p>
-
-<h2 id="round-1">Round 1</h2>
-
-<p>一开始的思路是查看liquid用了哪些变量，然后只提取使用的变量，但是这样有两个问题：</p>
-
-<ul>
-<li>不得不提前解析一次liquid，性能影响很大。</li>
-<li>除了liquid本身的语法，我们还自定义了一些其他的用法，还有页面之间的include，解析难度也比较大。</li>
-</ul>
-
-<p>放弃。</p>
-
-<h2 id="round-2">Round 2</h2>
-
-<p>仔细研究了一下liquid的render，实际上对变量的读取就是通过hash的key来实现的，并且通过测试修改hash.[]方法就可以做到自由控制变量的入口了。</p>
-
-<p>所以改成了以lazy_hash的形式来读取redis，需要什么取什么。</p>
-
-<pre><code class="language-ruby">class LazyHash &lt; Hash
-  attr_accessor :default_key
-  def initialize(key)
-    default_key = key
-  end
-
-  def [](key)
-    result = super(key)
-    return result if result!=nil
-    result = $redis.hget(default_key, key)
-    self.[]=(key, result)
-  end
-end  
-</code></pre>
-
-<p>改动后可以达到需要key才去redis里面读，多次使用同一个key不需要每次都去读的效果。</p>
-
-<h2 id="round-3">Round 3</h2>
-
-<p>但是在实际中发现liquid并没有渲染，binding进liquid发现liquid会使用key?对hash先判断一下key是否存在。于是继续修改如下</p>
-
-<pre><code class="language-ruby"># 追加方法
-  def key?(key)
-    self.[](key) != nil
-  end
-</code></pre>
-
-<p>到此基本已经达到目的了，不过还有一个小问题。</p>
-
-<h2 id="round-4">Round 4</h2>
-
-<p>那就是用户在编辑liquid的时候可能为了测试会直接输出对象，例如：</p>
-
-<pre><code>{ global_setting }
-
-{ global_setting | json }
-</code></pre>
-
-<p>为了应对这种情况还是要提供一些load!方法的：</p>
-
-<pre><code class="language-ruby">  def load!
-    merge!($redis.hgetall(default_key))
-  end
-  def inspect
-    load!
-    super
-  end
-
-  def to_s
-    load!
-    super
-  end
-
-  def to_json
-    load!
-    super
-  end
-</code></pre>
-
-<p>至此基本优化完成，测试效果是redis的请求数量大概提升了一倍，但是总的带宽降低5倍以上。</p>
-
-<p>这个其实没有通用性，只能说具体问题具体分析，只是作为一种优化思路提供。</p>
-
-      </div>
+          <p class="footnote">
+          <time datetime="10-01-2018">
+            10-01-2018
+          </time>
+          </p>
+        </li>
+        
+        
+      </ul>
     </div>
   </div>
   <div class="pure-u-1-24 pure-u-md-1-6"></div>
@@ -536,7 +475,7 @@ end
 
         </ul>
         <a href="#" class="pure-menu-link pull-right" id="gototop-btn">↑↑</a>
-        <a href="" class="pure-menu-link pull-right">RSS</a>
+        <a href="http://blog.jerry-tao.com/categories/microservice/index.xml" class="pure-menu-link pull-right">RSS</a>
       </div>
       
       <p id="foot-copyright">(c) 2013 -- 2017</p>

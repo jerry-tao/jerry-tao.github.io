@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Microservice on Jerry Tao</title>
+    <link>http://blog.jerry-tao.com/categories/microservice/</link>
+    <description>Recent content in Microservice on Jerry Tao</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-CN</language>
+    <copyright>(c) 2013 -- 2017</copyright>
+    <lastBuildDate>Wed, 03 Oct 2018 14:15:36 +0800</lastBuildDate>
+    
+	<atom:link href="http://blog.jerry-tao.com/categories/microservice/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Microservice In Action: Transport(2)</title>
+      <link>http://blog.jerry-tao.com/2018/03/06/mia-3/</link>
+      <pubDate>Wed, 03 Oct 2018 14:15:36 +0800</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2018/03/06/mia-3/</guid>
+      <description>1. Server 续上，在实现上有两种方式，一种是只做func的wrapper，即go-kit里面使用的，把对应的service func封装成指定的格式然后自定义使用的协议来自己启动server。另一种是直接把server包含在对应的package中。前者更加灵活，后者用起来更加简单，两者原理基本一致，所以实现一下第二种。
+首先假设调用格式如下：
+srv := postService{} server := Server{ ServiceKey: &amp;quot;service.form&amp;quot;, NatsURL: &amp;quot;localhost:4222&amp;quot;, Mapper: make(map[string]pkg.ServiceFunc), SubcribeMapper: make(map[string]pkg.ServiceFunc), HttpPort: &amp;quot;:8888&amp;quot;, Protocols: []string{&amp;quot;http&amp;quot;, &amp;quot;nats&amp;quot;}, } server.Register(&amp;quot;show&amp;quot;, srv.Show) server.Register(&amp;quot;create&amp;quot;, srv.Create) server.Register(&amp;quot;update&amp;quot;, srv.Update) server.Register(&amp;quot;list&amp;quot;, srv.List) server.Register(&amp;quot;delete&amp;quot;, srv.Delete) server.Register(&amp;quot;publish&amp;quot;, srv.Publish) server.Subcribe(&amp;quot;comment.create&amp;quot;, srv.AddCommentCount) // 完全没有实际意义，只是演示 server.Start() // 非block  如上调用之后，访问show方法就是 http://post_service:8888/show，这里并没有区分http method，也就是说无论是get还是post都一致，或者说可以干脆都使用post来实现。
+接下来是server，
+type Server struct { HttpPort string NatsURL string ServiceKey string Mapper map[string]ServiceFunc SubcribeMapper map[string]ServiceFunc Protocols []string } func (s Server) Register(key string, serviceFunc ServiceFunc) { s.</description>
+    </item>
+    
+    <item>
+      <title>Microservice In Action: Transport(1)</title>
+      <link>http://blog.jerry-tao.com/2018/03/06/mia-2/</link>
+      <pubDate>Tue, 02 Oct 2018 14:15:36 +0800</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2018/03/06/mia-2/</guid>
+      <description>0. Intro 在微服务架构里，传输层可以说是最重要的一部分，哪怕一个微服务不需要call其他微服务，也需要提供接口给其他微服务调用。
+而且传输层应该是跟service无关相对独立的，这样才可以支持多种协议而且不需要修改业务代码就可以轻松切换。
+在传输层需要考虑的问题主要有：
+传输方式：
+ http rpc message bus(mq，broker等)  调用方式：
+ 同步 异步  1. 传输方式 其实各种传输方式的差距并不是很巨大，或者说，很难有一个特别明确的分界线应该如何选择传输协议。
+http相对其他两种方式的主要优点在于简单，不需要特殊框架就可以call，大部分语言都会内置http库，无论是客户端还是服务端相对来说实现起来都比较轻松。
+主要缺点在于性能往往优势不大，但是在http2里已经优化很多了（毕竟grpc的底层就是http2），而且http协议本身也可以看做是一种rpc。
+rpc和message bus两者都需要使用单独的client lib，这两者之间有一个很重要的问题就在于后者可以更好的灵活调度。
+我们假设有A服务需要调用B服务，同时存在10个B服务作为集群，那么如果简单的使用rpc协议，例如grpc这种，我们就需要自己在A服务上区分要调用哪个B服务来处理，而使用message bus（thrift，nats，rabbitmq等）也都可以实现类似rpc的效果，而且可以更灵活的处理负载均衡等问题。
+2. 同步 vs 异步 同步的方式很像常用的func call，我们调用一个方法，我们等待他的返回，如果出错就重试或者报错。这种在逻辑上并不难懂，同步的主要缺点在于这种方式增加了服务间的耦合。
+比如服务A调用服务B，必须等待服务B的返回，这种情况下如果B出错，或者测试，或者单独更新B的时候，都容易影响到A的效果。
+同步最常见的使用场景就是load data，需要其他服务配合来组装返回的数据。
+异步的方式会减少服务间的依赖，发送出消息之后就可以继续执行。异步的缺点主要在于会增加整体系统的复杂度，而且对调试来说也更复杂，因为你想知道一个服务会影响到几个服务会变得更加困难。
+异步有两种主要的使用场景，一种是pub/sub模式，比如说我一个订单支出成功，我可能要发出一个order.paid的消息，可能同时有对账，财务，订单，库存微服务都订阅了这个消息。
+另一种模式是background job，比如说我异步发送一个邮件，email.send，可能同时有10个邮件发送的服务在运行中，只要有一个收到即可。
+两种模式也经常混合在一起使用，比如说第一个例子里订单微服务可能有几十台的集群。
+还有一种模式介于两者之间，还是用发送邮件举例，调用发送邮件的服务可能并不关心邮件的发送结果，是否发送失败，邮件服务器是否故障，然而从整个系统来说，可能需要追踪这个结果，这种时候可以用同步的方式由发送者来确认发送结果，也可以用异步同时用message bus来确保如果失败继续retry的逻辑。
+3. 约定 在demo里面，使用json作为主要的传输格式，请求json格式如下：
+{ &amp;quot;track_id&amp;quot;:&amp;quot;aaaa-bbbb-cccc-dddd&amp;quot;, &amp;quot;method&amp;quot;:&amp;quot;show&amp;quot;, &amp;quot;payload&amp;quot;:{ &amp;quot;id&amp;quot;:1 } }  返回的json格式如下：
+// 正常时 { &amp;quot;data&amp;quot;:{&amp;quot;id&amp;quot;:1, &amp;quot;content&amp;quot;:&amp;quot;Good for u&amp;quot;} } // 错误时 { &amp;quot;err&amp;quot;:&amp;quot;the post doesn&#39;t exist.</description>
+    </item>
+    
+    <item>
+      <title>Microservice In Action: 从service开始</title>
+      <link>http://blog.jerry-tao.com/2018/03/06/mia-1/</link>
+      <pubDate>Mon, 01 Oct 2018 14:15:36 +0800</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2018/03/06/mia-1/</guid>
+      <description>0. Intro 这一系列blog主要是介绍如何实现一个简单的微服务框架，主要参考的对象是go-kit，更多的关注是实现的具体细节，所以有两个问题不会涉及：
+ Microservice vs Monolithic：这个话题已经太多了，从微服务出来的第一天关于这两者的对比就层出不穷。 如何根据具体的业务划分微服务：其实这个才是微服务架构的核心，但是这个会依赖很多其他东西，比如具体的业务模型，团队水平等等，所以更多时候只能各自做取舍。  因为主要的目的是介绍一个微服务框架的组成部分以及具体的实现，所以就使用一个简单的blog做example。
+1. Service 先简单写个基本的post service：
+type Service interface{ Create(req Request)(Response) Show(req Request)(Response) }  虽然作为微服务系统来说，可以很灵活的选择语言和实现，只需要统一通信层即可，不过在一定程度上的一致还是可以帮助我们减少工作量的。所以我们先定义一个service func的标准：
+type ServiceFunc func(Request) (Response)  这里的作用有点类似go-kit里面的endpoint，在go-kit的example中，是把service func跟endpoint分开实现的，service func完全自定义实现业务逻辑，使用endpoint包裹之后可以做中间层和对具体的传输协议做封装，不过这里暂时就只使用ServiceFunc来作为基础的标准。
+2. Request &amp;amp; Response 这里的Request和Response虽然是叫req/res，其实就是统一的作为service func 的输入和输出，统一格式便于传输层处理。
+type Request struct { Method string // 具体调用的方法 Protocol string // 传输层使用的协议 Payload []byte // 具体的参数 TrackID string // 用于在多个服务间追踪 } type Response struct { Data interface{} // 正常时返回的数据 Err error // 出错时返回的报错 }  传输层的格式化主要使用json，这样在各个协议之间都比较轻松，不管是http还是rpc活着message bus，然后由于go作为一门强类型的语言，很难对参数做太多的统一处理，比如说下面格式的json：</description>
+    </item>
+    
+  </channel>
+</rss>

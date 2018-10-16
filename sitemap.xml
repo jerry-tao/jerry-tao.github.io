@@ -3,6 +3,21 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
+    <loc>http://blog.jerry-tao.com/2018/03/06/mia-3/</loc>
+    <lastmod>2018-10-03T14:15:36+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://blog.jerry-tao.com/2018/03/06/mia-2/</loc>
+    <lastmod>2018-10-02T14:15:36+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://blog.jerry-tao.com/2018/03/06/mia-1/</loc>
+    <lastmod>2018-10-01T14:15:36+08:00</lastmod>
+  </url>
+  
+  <url>
     <loc>http://blog.jerry-tao.com/2018/03/06/json-in-go/</loc>
     <lastmod>2018-03-06T14:15:36+08:00</lastmod>
   </url>
@@ -202,13 +217,19 @@
   
   <url>
     <loc>http://blog.jerry-tao.com/</loc>
-    <lastmod>2018-03-06T14:15:36+08:00</lastmod>
+    <lastmod>2018-10-03T14:15:36+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>http://blog.jerry-tao.com/categories/microservice/</loc>
+    <lastmod>2018-10-03T14:15:36+08:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>http://blog.jerry-tao.com/posts/</loc>
-    <lastmod>2018-03-06T14:15:36+08:00</lastmod>
+    <lastmod>2018-10-03T14:15:36+08:00</lastmod>
     <priority>0</priority>
   </url>
   

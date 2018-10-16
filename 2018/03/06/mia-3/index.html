@@ -3,8 +3,8 @@
 <head>
   
   <meta charset="utf-8">
-  <title>使用延迟加载来优化redis请求</title>
-  <meta name="description" content="使用延迟加载来优化redis请求">
+  <title>Microservice In Action: Transport(2)</title>
+  <meta name="description" content="Microservice In Action: Transport(2)">
   <meta name="author" content="">
   
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -409,7 +409,7 @@ body {
 
       <div class="post-title">
         <p class="footnote">
-        <time class="">09-09-2016</time>
+        <time class="">10-03-2018</time>
         
         
         |
@@ -417,102 +417,167 @@ body {
         
 
         
-        categories: [<a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
+        categories: [<a href="http://blog.jerry-tao.com/categories/microservice">Microservice</a> ]
         
 
         
         </p>
-        <h1>使用延迟加载来优化redis请求</h1>
+        <h1>Microservice In Action: Transport(2)</h1>
       </div>
 
       <div class="post-content">
         
 
-<h2 id="background">Background</h2>
+<h2 id="1-server">1. Server</h2>
 
-<p>我们系统允许客户自己对页面进行编辑，基于liquid实现的，提供了一大堆变量以供在页面上显示。</p>
+<p>续上，在实现上有两种方式，一种是只做func的wrapper，即go-kit里面使用的，把对应的service func封装成指定的格式然后自定义使用的协议来自己启动server。另一种是直接把server包含在对应的package中。前者更加灵活，后者用起来更加简单，两者原理基本一致，所以实现一下第二种。</p>
 
-<p>因为不确定客户会使用哪些变量，所以在渲染liquid之前就要把提供的对象都从redis里面提取出来准备好，但实际上也许只使用了其中一部分的一部分。而且由于每个页面都需要加载所有变量，对redis来说非常不友好（通信量过大）。</p>
+<p>首先假设调用格式如下：</p>
 
-<h2 id="round-1">Round 1</h2>
-
-<p>一开始的思路是查看liquid用了哪些变量，然后只提取使用的变量，但是这样有两个问题：</p>
-
-<ul>
-<li>不得不提前解析一次liquid，性能影响很大。</li>
-<li>除了liquid本身的语法，我们还自定义了一些其他的用法，还有页面之间的include，解析难度也比较大。</li>
-</ul>
-
-<p>放弃。</p>
-
-<h2 id="round-2">Round 2</h2>
-
-<p>仔细研究了一下liquid的render，实际上对变量的读取就是通过hash的key来实现的，并且通过测试修改hash.[]方法就可以做到自由控制变量的入口了。</p>
-
-<p>所以改成了以lazy_hash的形式来读取redis，需要什么取什么。</p>
-
-<pre><code class="language-ruby">class LazyHash &lt; Hash
-  attr_accessor :default_key
-  def initialize(key)
-    default_key = key
-  end
-
-  def [](key)
-    result = super(key)
-    return result if result!=nil
-    result = $redis.hget(default_key, key)
-    self.[]=(key, result)
-  end
-end  
+<pre><code class="language-go">srv := postService{}
+server := Server{
+  ServiceKey: &quot;service.form&quot;,
+  NatsURL:    &quot;localhost:4222&quot;,
+  Mapper:         make(map[string]pkg.ServiceFunc),
+  SubcribeMapper: make(map[string]pkg.ServiceFunc),
+  HttpPort:   &quot;:8888&quot;,
+  Protocols:  []string{&quot;http&quot;, &quot;nats&quot;},
+}
+server.Register(&quot;show&quot;, srv.Show)
+server.Register(&quot;create&quot;, srv.Create)
+server.Register(&quot;update&quot;, srv.Update)
+server.Register(&quot;list&quot;, srv.List)
+server.Register(&quot;delete&quot;, srv.Delete)
+server.Register(&quot;publish&quot;, srv.Publish)
+server.Subcribe(&quot;comment.create&quot;, srv.AddCommentCount) // 完全没有实际意义，只是演示
+server.Start() // 非block
 </code></pre>
 
-<p>改动后可以达到需要key才去redis里面读，多次使用同一个key不需要每次都去读的效果。</p>
+<p>如上调用之后，访问show方法就是 <a href="http://post_service:8888/show，这里并没有区分http">http://post_service:8888/show，这里并没有区分http</a> method，也就是说无论是get还是post都一致，或者说可以干脆都使用post来实现。</p>
 
-<h2 id="round-3">Round 3</h2>
+<p>接下来是server，</p>
 
-<p>但是在实际中发现liquid并没有渲染，binding进liquid发现liquid会使用key?对hash先判断一下key是否存在。于是继续修改如下</p>
+<pre><code class="language-go">type Server struct {
+	HttpPort   string
+	NatsURL    string
+	ServiceKey string
+	Mapper     map[string]ServiceFunc
+  SubcribeMapper map[string]ServiceFunc
+	Protocols  []string
+}
 
-<pre><code class="language-ruby"># 追加方法
-  def key?(key)
-    self.[](key) != nil
-  end
+func (s Server) Register(key string, serviceFunc ServiceFunc) {
+	s.Mapper[key] = serviceFunc
+}
+
+func (s Server) Start() {
+  for _,k:= range s.Protocols {
+		switch k {
+		case &quot;http&quot;:
+			go s.StartHttpServer()
+		case &quot;nats&quot;:
+			go s.StartNatsSubcriber()
+		}
+	}
+}
 </code></pre>
 
-<p>到此基本已经达到目的了，不过还有一个小问题。</p>
+<p>同时我们要对之前的Request和Response制定一下json化的策略：</p>
 
-<h2 id="round-4">Round 4</h2>
+<pre><code class="language-go"></code></pre>
 
-<p>那就是用户在编辑liquid的时候可能为了测试会直接输出对象，例如：</p>
+<h2 id="2-http">2. Http</h2>
 
-<pre><code>{ global_setting }
+<p>Http相对来说，比较简单，只需要监听接口即可。</p>
 
-{ global_setting | json }
+<pre><code class="language-go">func (s Server) StartHttpServer() {
+	for k, v := range s.Mapper {
+		http.HandleFunc(&quot;/&quot;+k, httpWrapper(v))
+	}
+	http.ListenAndServe(s.HttpPort, nil)
+}
+
+func httpWrapper(s ServiceFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var request Request
+		json.NewDecoder(r.Body).Decode(&amp;request)
+		result := s(request)
+		w.Header().Set(&quot;Content-Type&quot;, &quot;application/json&quot;)
+		json.NewEncoder(w).Encode(&amp;result)
+	}
+}
+
 </code></pre>
 
-<p>为了应对这种情况还是要提供一些load!方法的：</p>
+<h2 id="3-nats">3. Nats</h2>
 
-<pre><code class="language-ruby">  def load!
-    merge!($redis.hgetall(default_key))
-  end
-  def inspect
-    load!
-    super
-  end
+<p>nats部分相对来说，暂时需要考虑两种情况：一种是像http一样对外提供接口，另一种是接收异步的消息。</p>
 
-  def to_s
-    load!
-    super
-  end
-
-  def to_json
-    load!
-    super
-  end
+<pre><code class="language-go">func (s Server) StartNatsSubcriber() {
+	nc, _ := nats.Connect(s.NatsURL)
+	nc.Subscribe(s.ServiceKey, func(msg *nats.Msg) {
+		req := Request{}
+		json.Unmarshal(msg.Data, &amp;req)
+		result := s.Mapper[req.Method](req)
+		reply, _ := json.Marshal(result)
+		nc.Publish(msg.Reply, reply)
+	})
+	for k, v := range s.SubcribeMapper {
+		nc.Subscribe(k, func(msg *nats.Msg) {
+			req := Request{}
+			json.Unmarshal(msg.Data, &amp;req)
+			result := v(req)
+			reply, _ := json.Marshal(result)
+			nc.Publish(msg.Reply, reply)
+		})
+	}
+}
 </code></pre>
 
-<p>至此基本优化完成，测试效果是redis的请求数量大概提升了一倍，但是总的带宽降低5倍以上。</p>
+<p>同时需要对原来的request和response自定义一下json处理：</p>
 
-<p>这个其实没有通用性，只能说具体问题具体分析，只是作为一种优化思路提供。</p>
+<pre><code class="language-go">func (req *Request) UnmarshalJSON(jsonBytes []byte) error {
+	var pre map[string]interface{}
+	err := json.Unmarshal(jsonBytes, &amp;pre)
+	if err != nil {
+		return err
+	}
+	req.Method = pre[&quot;method&quot;].(string)
+	req.Protocol = pre[&quot;protocol&quot;].(string)
+	req.TrackID = pre[&quot;track_id&quot;].(string)
+	payload, err := json.Marshal(pre[&quot;payload&quot;])
+	if err != nil {
+		return err
+	}
+	req.Payload = payload
+	return nil
+}
+func (res *Response) MarshalJSON() ([]byte, error) {
+	if res.Err != nil {
+		return json.Marshal(&amp;struct {
+			Err string `json:&quot;err&quot;`
+		}{
+			Err: res.Err.Error(),
+		})
+	} else {
+		return json.Marshal(&amp;struct {
+			Data interface{} `json:&quot;data,omitempty&quot;`
+		}{
+			Data: res.Data,
+		})
+	}
+}
+</code></pre>
+
+<h2 id="4-其他">4. 其他</h2>
+
+<p>到目前为止，只是实现了一个非常简单的传输层，距离真正生产使用还很大。</p>
+
+<p>首先我们并没有考虑负载均衡，所以目前还不能对微服务进行横向扩展。</p>
+
+<p>其次是还没有实现服务发现，所以只实现了服务端还没有实现client，因为当我们试图call一个service的时候，我们需要知道它支持的协议。</p>
+
+<p>不过对于大多数情况来说，我们的service之间都是internal并且假设互相都是可信的通信，所以不会做授权检查同时协议也应该是相对固定的，上面同时写了http和nats只是为了展示，大多数情况我们应该尽量统一通信协议。</p>
 
       </div>
     </div>
