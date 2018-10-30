@@ -3,8 +3,8 @@
 <head>
   
   <meta charset="utf-8">
-  <title>简单的长微博示例</title>
-  <meta name="description" content="简单的长微博示例">
+  <title>NATS源码导读01</title>
+  <meta name="description" content="NATS源码导读01">
   <meta name="author" content="">
   
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -425,7 +425,7 @@ body {
 
       <div class="post-title">
         <p class="footnote">
-        <time class="">01-22-2014</time>
+        <time class="">10-15-2018</time>
         
         
         |
@@ -433,74 +433,146 @@ body {
         
 
         
-        categories: [<a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
+        categories: [<a href="http://blog.jerry-tao.com/categories/lbr">lbr</a> ]
         
 
         
         </p>
-        <h1>简单的长微博示例</h1>
+        <h1>NATS源码导读01</h1>
       </div>
 
       <div class="post-content">
-        <p>长微博就是把文字转换成图片，主要用到的gem是<a href="https://github.com/csquared/IMGKit">imgkit</a>。</p>
+        
 
-<p>imgkit是一个通过open3来调用wkhtmltoimage生成图片的gem，源码不是很复杂，使用也很简单。</p>
+<h2 id="0-intro">0. Intro</h2>
 
-<p>基本步骤如下：</p>
+<p><a href="https://github.com/nats-io/gnatsd">NATS</a>是一款基于Go语言的MQ，主要卖点是high thoughout，秒千万级别的吞吐量。当然没有银弹，高吞吐的一个原因就在于功能其实非常简单，可以说只实现了MQ的最基本功能，所以其自我描述更喜欢叫messaging system，主要缺失的功能包括持久化等。</p>
 
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby">rails <span style="color:#66d9ef">new</span> long<span style="color:#f92672">-</span>weibo
-<span style="color:#75715e">#Add imgkit and carrierwave to Gemfile and run bundle</span>
-rails g model weibo <span style="color:#e6db74">weibo</span>:string <span style="color:#e6db74">image</span>:string
-rake <span style="color:#e6db74">db</span>:migrate
-rails g controller home index create</code></pre></div>
+<p>之所以选择读NATS的源码而不是rabbitMQ等，主要原因也是因为他简单但是又足够，如果想要持久化功能还可以参考NATS Streaming，除去依赖和测试代码NATS只有不足8000行代码。</p>
 
-<p>修改一下routes.rb
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby">   post <span style="color:#e6db74">&#34;create&#34;</span> <span style="color:#f92672">=&gt;</span><span style="color:#e6db74">&#39;home#create&#39;</span>
-   root <span style="color:#e6db74">&#39;home#index&#39;</span></code></pre></div>
-写个简单的界面home/index.html.erb
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erb" data-lang="erb">&lt;textarea id=&#34;content&#34; name=&#34;content&#34;&gt;
-&lt;/textarea&gt;
-&lt;a id=&#34;create&#34; href=&#34;#create&#34;&gt;Create&lt;/a&gt;
-&lt;div id=&#34;image&#34;&gt;
-&lt;/div&gt;</code></pre></div>
-写段简单的js
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#a6e22e">$</span>(<span style="color:#66d9ef">function</span>(){
-  <span style="color:#a6e22e">$</span>(<span style="color:#e6db74">&#34;#create&#34;</span>).<span style="color:#a6e22e">click</span>(<span style="color:#66d9ef">function</span>(){
-     <span style="color:#66d9ef">var</span> <span style="color:#a6e22e">content</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">$</span>(<span style="color:#e6db74">&#34;#content&#34;</span>).<span style="color:#a6e22e">val</span>();
-     <span style="color:#a6e22e">$</span>.<span style="color:#a6e22e">post</span>(<span style="color:#e6db74">&#34;/create&#34;</span>,{<span style="color:#a6e22e">content</span><span style="color:#f92672">:</span><span style="color:#a6e22e">content</span>},<span style="color:#66d9ef">function</span>(<span style="color:#a6e22e">returnData</span>){
-       <span style="color:#a6e22e">$</span>(<span style="color:#e6db74">&#34;#image&#34;</span>).<span style="color:#a6e22e">html</span>(<span style="color:#e6db74">&#34;&lt;img src=&#39;&#34;</span><span style="color:#f92672">+</span><span style="color:#a6e22e">returnData</span><span style="color:#f92672">+</span><span style="color:#e6db74">&#34;&#39;&gt;&#34;</span>);
-     });
-  });
-});
-</code></pre></div>
-把controller改改
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby">  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e"></span><span style="color:#f92672"></span><span style="color:#a6e22e">index</span>
-  <span style="color:#66d9ef">end</span>
-  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e"></span><span style="color:#f92672"></span><span style="color:#a6e22e">create</span>
-    @weibo <span style="color:#f92672">=</span> <span style="color:#66d9ef">Weibo</span><span style="color:#f92672">.</span>create(<span style="color:#e6db74">weibo</span>:params<span style="color:#f92672">[</span><span style="color:#e6db74">:content</span><span style="color:#f92672">]</span>)
-    render <span style="color:#e6db74">:text</span><span style="color:#f92672">=&gt;</span><span style="color:#e6db74">&#34;</span><span style="color:#e6db74">#{</span>@weibo<span style="color:#f92672">.</span>image<span style="color:#f92672">.</span>url<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>
-  <span style="color:#66d9ef">end</span></code></pre></div>
-把model改改
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Weibo</span> <span style="color:#f92672">&lt;</span> <span style="color:#66d9ef">ActiveRecord</span><span style="color:#f92672">::</span><span style="color:#66d9ef">Base</span>
-  after_create <span style="color:#e6db74">:generate_image</span>
-  mount_uploader <span style="color:#e6db74">:image</span>,<span style="color:#66d9ef">ImageUploader</span>
-  <span style="color:#66d9ef">private</span>
-  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e"></span><span style="color:#f92672"></span><span style="color:#a6e22e">generate_image</span>
-      file <span style="color:#f92672">=</span> <span style="color:#66d9ef">Tempfile</span><span style="color:#f92672">.</span>new(<span style="color:#f92672">[</span><span style="color:#e6db74">&#34;template_</span><span style="color:#e6db74">#{</span>self<span style="color:#f92672">.</span>id<span style="color:#f92672">.</span>to_s<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>, <span style="color:#e6db74">&#39;jpg&#39;</span><span style="color:#f92672">]</span>, <span style="color:#e6db74">&#39;tmp&#39;</span>, <span style="color:#e6db74">:encoding</span> <span style="color:#f92672">=&gt;</span> <span style="color:#e6db74">&#39;ascii-8bit&#39;</span>)
-      <span style="color:#75715e">#不加html标准标签中文会乱码</span>
-      <span style="color:#75715e">#因为textarea中的换行是\n 需要替换成br标签</span>
-      weibo <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&lt;!DOCTYPE html&gt;&lt;html lang=&#39;zh-cn&#39;&gt;&lt;head&gt;&lt;meta charset=&#39;UTF-8&#39;&gt;&lt;/head&gt;&lt;body&gt;</span><span style="color:#e6db74">#{</span>self<span style="color:#f92672">.</span>weibo<span style="color:#f92672">.</span>gsub(<span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>,<span style="color:#e6db74">&#34;&lt;br /&gt;&#34;</span>)<span style="color:#e6db74">}</span><span style="color:#e6db74">&lt;/body&gt;&lt;/html&gt;&#34;</span>
-      file<span style="color:#f92672">.</span>write(<span style="color:#66d9ef">IMGKit</span><span style="color:#f92672">.</span>new(weibo, <span style="color:#e6db74">quality</span>: <span style="color:#ae81ff">50</span><span style="color:#f92672"></span>, <span style="color:#e6db74">width</span>: <span style="color:#ae81ff">600</span><span style="color:#f92672"></span>,<span style="color:#e6db74">height</span>:<span style="color:#ae81ff">0</span><span style="color:#f92672"></span>)<span style="color:#f92672">.</span>to_jpg)
-      file<span style="color:#f92672">.</span>flush
-      self<span style="color:#f92672">.</span>image <span style="color:#f92672">=</span> file
-      self<span style="color:#f92672">.</span>save
-      file<span style="color:#f92672">.</span>unlink
-  <span style="color:#66d9ef">end</span>
-<span style="color:#66d9ef">end</span></code></pre></div>
-完成了，超级简陋的长微博生成工具。</p>
+<h2 id="1-codes">1. Codes</h2>
 
-<p>源码地址：
-<a href="https://github.com/jerry-tao/long-weibo">long-weibo</a></p>
+<p>git-commit: 899b0849344f6b8386c8da40f4cbbd0f25f74396</p>
+
+<p><strong>LOC:</strong></p>
+
+<pre><code>-------------------------------------------------------------------------------
+Language                     files          blank        comment           code
+-------------------------------------------------------------------------------
+Go                              21           1157           1697           7936
+-------------------------------------------------------------------------------
+SUM:                            21           1157           1697           7936
+-------------------------------------------------------------------------------
+</code></pre>
+
+<p><strong>Tree:</strong></p>
+
+<pre><code>├── auth.go 权限管理相关
+├── ciphersuites.go 加密协议
+├── client.go 连接处理
+├── const.go 常量
+├── errors.go 错误
+├── log.go 日志接口
+├── monitor.go 提供http查看服务器信息
+├── monitor_sort_opts.go 同上
+├── nkey.go 依赖，未深入，看起来像是自己写了一个加密解密的算法
+├── opts.go 配置
+├── parser.go 协议parser
+├── reload.go reload服务器
+├── ring.go monitor相关
+├── route.go 集群相关
+├── server.go server
+├── signal.go 信号处理
+├── sublist.go topic存储
+└── util.go
+</code></pre>
+
+<p><strong>Trim:</strong></p>
+
+<p>去掉一些内容</p>
+
+<ul>
+<li>/conf：为了解析config自己写了个lex&amp;parser。</li>
+<li>/logger：其实用的logger也是自己写的，根目录这个logger只是另一层wrapper</li>
+<li>/util：用来生成password的一个小工具</li>
+<li>/server/pse、signal_windows.go、service_windows,service 这几个文件都是为了支持不同系统而存在的。</li>
+<li>auth和monitor相关代码，前者是一个很简单的结构体和map权限管理，后者是提供http来查看服务器状态的一个http server，所以都略过。</li>
+</ul>
+
+<h2 id="3-启动服务器">3. 启动服务器</h2>
+
+<p>启动服务器的流程：处理options-&gt;启动monitor-&gt;判断是否加入集群-&gt;开启端口监听</p>
+
+<p><strong>处理options</strong></p>
+
+<p>处理options其实没太多好讲，主要就是从flags，config file和默认值里生成一个Options，比较关键的属性：</p>
+
+<pre><code class="language-go">type Options struct {
+	Host             string        `json:&quot;addr&quot;` // 监听地址
+	Port             int           `json:&quot;port&quot;` // 监听端口
+	MaxConn          int           `json:&quot;max_connections&quot;` // 最大连接数
+	MaxSubs          int           `json:&quot;max_subscriptions,omitempty&quot;`// 最大订阅数
+	MaxPayload       int           `json:&quot;max_payload&quot;` // 单条消息最大payload
+	PidFile          string        `json:&quot;-&quot;` // 指定pid文件
+	LogFile          string        `json:&quot;-&quot;` // 日志文件
+}
+</code></pre>
+
+<p>启动monitor略，集群后面会单独写。</p>
+
+<p><strong>开启监听</strong></p>
+
+<p>从main开始最终会走到<code>s.AcceptLoop(clientListenReady)</code>，</p>
+
+<pre><code class="language-go">func (s *Server) AcceptLoop(clr chan struct{}) {
+  ...
+	hp := net.JoinHostPort(opts.Host, strconv.Itoa(opts.Port))
+	l, e := net.Listen(&quot;tcp&quot;, hp)
+	s.listener = l // 监听TCP
+  ...
+	for s.isRunning() {
+		conn, err := l.Accept()
+    ...
+		s.startGoRoutine(func() {
+			s.createClient(conn) // 每当有一个新的connect，就创建一个新的client。
+			s.grWG.Done()
+		})
+	}
+}
+</code></pre>
+
+<p>startGoRoutine是一个用来启动goroutine的方法，有一个work_group用来track全部启动的goroutine：</p>
+
+<pre><code class="language-go">func (s *Server) startGoRoutine(f func()) {
+	s.grMu.Lock()
+	if s.grRunning {
+		s.grWG.Add(1)
+		go f()
+	}
+	s.grMu.Unlock()
+}
+</code></pre>
+
+<h2 id="4-create-client">4. Create Client</h2>
+
+<p>createClient创建了一个新的client struct同时开启两个goroutine分别监听conn的read和write：</p>
+
+<pre><code class="language-go">func (s *Server) createClient(conn net.Conn) *client {
+  ...
+  // 创建client
+	c := &amp;client{srv: s, nc: conn, opts: defaultOpts, mpay: max_pay, msubs: max_subs, start: now, last: now}
+  // server追踪client
+	s.totalClients++
+	s.clients[c.cid] = c
+	// ping-pong保持连接
+	c.setPingTimer()
+	// 监听读
+	s.startGoRoutine(c.readLoop)
+	// 监听写
+	s.startGoRoutine(c.writeLoop)
+
+}
+</code></pre>
 
       </div>
     </div>

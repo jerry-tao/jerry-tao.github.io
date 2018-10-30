@@ -3,8 +3,8 @@
 <head>
   
   <meta charset="utf-8">
-  <title>简单的长微博示例</title>
-  <meta name="description" content="简单的长微博示例">
+  <title>NATS源码导读03</title>
+  <meta name="description" content="NATS源码导读03">
   <meta name="author" content="">
   
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -425,7 +425,7 @@ body {
 
       <div class="post-title">
         <p class="footnote">
-        <time class="">01-22-2014</time>
+        <time class="">10-16-2018</time>
         
         
         |
@@ -433,74 +433,183 @@ body {
         
 
         
-        categories: [<a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
+        categories: [<a href="http://blog.jerry-tao.com/categories/lbr">lbr</a> ]
         
 
         
         </p>
-        <h1>简单的长微博示例</h1>
+        <h1>NATS源码导读03</h1>
       </div>
 
       <div class="post-content">
-        <p>长微博就是把文字转换成图片，主要用到的gem是<a href="https://github.com/csquared/IMGKit">imgkit</a>。</p>
+        
 
-<p>imgkit是一个通过open3来调用wkhtmltoimage生成图片的gem，源码不是很复杂，使用也很简单。</p>
+<h2 id="0-trie树">0. Trie树</h2>
 
-<p>基本步骤如下：</p>
+<p>续上，在继续看nats如何处理命令之前，先看一下如何处理订阅之间的关联。</p>
 
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby">rails <span style="color:#66d9ef">new</span> long<span style="color:#f92672">-</span>weibo
-<span style="color:#75715e">#Add imgkit and carrierwave to Gemfile and run bundle</span>
-rails g model weibo <span style="color:#e6db74">weibo</span>:string <span style="color:#e6db74">image</span>:string
-rake <span style="color:#e6db74">db</span>:migrate
-rails g controller home index create</code></pre></div>
+<p>在继续之前需要了解trie树，字典树也算是很经典的一种数据结构了，大体结构如图：</p>
 
-<p>修改一下routes.rb
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby">   post <span style="color:#e6db74">&#34;create&#34;</span> <span style="color:#f92672">=&gt;</span><span style="color:#e6db74">&#39;home#create&#39;</span>
-   root <span style="color:#e6db74">&#39;home#index&#39;</span></code></pre></div>
-写个简单的界面home/index.html.erb
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-erb" data-lang="erb">&lt;textarea id=&#34;content&#34; name=&#34;content&#34;&gt;
-&lt;/textarea&gt;
-&lt;a id=&#34;create&#34; href=&#34;#create&#34;&gt;Create&lt;/a&gt;
-&lt;div id=&#34;image&#34;&gt;
-&lt;/div&gt;</code></pre></div>
-写段简单的js
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-javascript" data-lang="javascript"><span style="color:#a6e22e">$</span>(<span style="color:#66d9ef">function</span>(){
-  <span style="color:#a6e22e">$</span>(<span style="color:#e6db74">&#34;#create&#34;</span>).<span style="color:#a6e22e">click</span>(<span style="color:#66d9ef">function</span>(){
-     <span style="color:#66d9ef">var</span> <span style="color:#a6e22e">content</span> <span style="color:#f92672">=</span> <span style="color:#a6e22e">$</span>(<span style="color:#e6db74">&#34;#content&#34;</span>).<span style="color:#a6e22e">val</span>();
-     <span style="color:#a6e22e">$</span>.<span style="color:#a6e22e">post</span>(<span style="color:#e6db74">&#34;/create&#34;</span>,{<span style="color:#a6e22e">content</span><span style="color:#f92672">:</span><span style="color:#a6e22e">content</span>},<span style="color:#66d9ef">function</span>(<span style="color:#a6e22e">returnData</span>){
-       <span style="color:#a6e22e">$</span>(<span style="color:#e6db74">&#34;#image&#34;</span>).<span style="color:#a6e22e">html</span>(<span style="color:#e6db74">&#34;&lt;img src=&#39;&#34;</span><span style="color:#f92672">+</span><span style="color:#a6e22e">returnData</span><span style="color:#f92672">+</span><span style="color:#e6db74">&#34;&#39;&gt;&#34;</span>);
-     });
-  });
-});
-</code></pre></div>
-把controller改改
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby">  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e"></span><span style="color:#f92672"></span><span style="color:#a6e22e">index</span>
-  <span style="color:#66d9ef">end</span>
-  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e"></span><span style="color:#f92672"></span><span style="color:#a6e22e">create</span>
-    @weibo <span style="color:#f92672">=</span> <span style="color:#66d9ef">Weibo</span><span style="color:#f92672">.</span>create(<span style="color:#e6db74">weibo</span>:params<span style="color:#f92672">[</span><span style="color:#e6db74">:content</span><span style="color:#f92672">]</span>)
-    render <span style="color:#e6db74">:text</span><span style="color:#f92672">=&gt;</span><span style="color:#e6db74">&#34;</span><span style="color:#e6db74">#{</span>@weibo<span style="color:#f92672">.</span>image<span style="color:#f92672">.</span>url<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>
-  <span style="color:#66d9ef">end</span></code></pre></div>
-把model改改
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ruby" data-lang="ruby"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Weibo</span> <span style="color:#f92672">&lt;</span> <span style="color:#66d9ef">ActiveRecord</span><span style="color:#f92672">::</span><span style="color:#66d9ef">Base</span>
-  after_create <span style="color:#e6db74">:generate_image</span>
-  mount_uploader <span style="color:#e6db74">:image</span>,<span style="color:#66d9ef">ImageUploader</span>
-  <span style="color:#66d9ef">private</span>
-  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e"></span><span style="color:#f92672"></span><span style="color:#a6e22e">generate_image</span>
-      file <span style="color:#f92672">=</span> <span style="color:#66d9ef">Tempfile</span><span style="color:#f92672">.</span>new(<span style="color:#f92672">[</span><span style="color:#e6db74">&#34;template_</span><span style="color:#e6db74">#{</span>self<span style="color:#f92672">.</span>id<span style="color:#f92672">.</span>to_s<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>, <span style="color:#e6db74">&#39;jpg&#39;</span><span style="color:#f92672">]</span>, <span style="color:#e6db74">&#39;tmp&#39;</span>, <span style="color:#e6db74">:encoding</span> <span style="color:#f92672">=&gt;</span> <span style="color:#e6db74">&#39;ascii-8bit&#39;</span>)
-      <span style="color:#75715e">#不加html标准标签中文会乱码</span>
-      <span style="color:#75715e">#因为textarea中的换行是\n 需要替换成br标签</span>
-      weibo <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&lt;!DOCTYPE html&gt;&lt;html lang=&#39;zh-cn&#39;&gt;&lt;head&gt;&lt;meta charset=&#39;UTF-8&#39;&gt;&lt;/head&gt;&lt;body&gt;</span><span style="color:#e6db74">#{</span>self<span style="color:#f92672">.</span>weibo<span style="color:#f92672">.</span>gsub(<span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>,<span style="color:#e6db74">&#34;&lt;br /&gt;&#34;</span>)<span style="color:#e6db74">}</span><span style="color:#e6db74">&lt;/body&gt;&lt;/html&gt;&#34;</span>
-      file<span style="color:#f92672">.</span>write(<span style="color:#66d9ef">IMGKit</span><span style="color:#f92672">.</span>new(weibo, <span style="color:#e6db74">quality</span>: <span style="color:#ae81ff">50</span><span style="color:#f92672"></span>, <span style="color:#e6db74">width</span>: <span style="color:#ae81ff">600</span><span style="color:#f92672"></span>,<span style="color:#e6db74">height</span>:<span style="color:#ae81ff">0</span><span style="color:#f92672"></span>)<span style="color:#f92672">.</span>to_jpg)
-      file<span style="color:#f92672">.</span>flush
-      self<span style="color:#f92672">.</span>image <span style="color:#f92672">=</span> file
-      self<span style="color:#f92672">.</span>save
-      file<span style="color:#f92672">.</span>unlink
-  <span style="color:#66d9ef">end</span>
-<span style="color:#66d9ef">end</span></code></pre></div>
-完成了，超级简陋的长微博生成工具。</p>
+<p><img src="/images/trie.jpg" alt="trie" /></p>
 
-<p>源码地址：
-<a href="https://github.com/jerry-tao/long-weibo">long-weibo</a></p>
+<p>其中最左侧节点连续下来就代表了aaaa，更多细节百度之，在nats里存储topic的结构就是一颗trie树。</p>
+
+<p>具体的协议我们只查看sub和pub两个命令。</p>
+
+<h2 id="1-sublist">1. Sublist</h2>
+
+<p>nats里的sublist结构如下：</p>
+
+<p><img src="/images/sublist.png" alt="trie" /></p>
+
+<pre><code class="language-go">type node struct {
+	next  *level
+	psubs map[*subscription]*subscription
+	qsubs map[string](map[*subscription]*subscription)
+	plist []*subscription
+}
+
+type level struct {
+	nodes    map[string]*node
+	pwc, fwc *node
+}
+</code></pre>
+
+<p>分隔符是基于.，例如最左侧的就代表了foo.bar topic。</p>
+
+<p>由于nats是支持publish和queue publish的，所以每个节点会同时存储psubs和qsubs：</p>
+
+<p>其中每个subscription存储了subject和对应的*client：</p>
+
+<pre><code class="language-go">type subscription struct {
+	client  *client
+	subject []byte
+}
+</code></pre>
+
+<p>所以只要找到了对应的topic需要发送出去的client就都可以找到了。</p>
+
+<p>这里比较关键的操作是Insert，Remove和Match。</p>
+
+<p>在创建server的时候，就会创建一个新的sublist：</p>
+
+<pre><code class="language-go">func New(opts *Options) *Server {
+  ...
+	s := &amp;Server{
+		configFile: opts.ConfigFile,
+		info:       info,
+		prand:      rand.New(rand.NewSource(time.Now().UnixNano())),
+		sl:         NewSublist(),// 新建sublist
+		opts:       opts,
+		done:       make(chan bool, 1),
+		start:      now,
+		configTime: now,
+	}
+
+}
+</code></pre>
+
+<h2 id="2-processsub">2. processSub</h2>
+
+<p>processSub相对来说比较简单，只要插入到我们上面的sublist中即可：</p>
+
+<pre><code class="language-go">func (c *client) processSub(argo []byte) (err error) {
+	sub := &amp;subscription{client: c}
+	switch len(args) { // 判断是不是queue
+	case 2:
+		sub.subject = args[0]
+		sub.queue = nil
+		sub.sid = args[1]
+	case 3:
+		sub.subject = args[0]
+		sub.queue = args[1]
+		sub.sid = args[2]
+	default:
+		return fmt.Errorf(&quot;processSub Parse Error: '%s'&quot;, arg)
+	}
+
+	sid := string(sub.sid)
+	if c.subs[sid] == nil { // 在client里维护自己的subscription，当断开连接的时候需要在sublist里删除
+		c.subs[sid] = sub
+		if c.srv != nil {
+			err = c.srv.sl.Insert(sub) // 插入到sublist当中
+			if err != nil {
+				delete(c.subs, sid)
+			} else {
+				shouldForward = c.typ != ROUTER
+			}
+		}
+	}
+
+}
+</code></pre>
+
+<h2 id="3-processpub">3. processPub</h2>
+
+<p>在parser里面，处理完pub之后状态机并没有停止，还会继续处理payload部分，也就是说一个pub message会触发processPub和processMsg两个操作：</p>
+
+<pre><code class="language-go">func (c *client) processPub(arg []byte) error {
+  ...
+  // 主要是写pubArg，在processMsg的时候会用到。
+	switch len(args) {
+	case 2:
+		c.pa.subject = args[0]
+		c.pa.reply = nil
+		c.pa.size = parseSize(args[1])
+		c.pa.szb = args[1]
+	case 3:
+		c.pa.subject = args[0]
+		c.pa.reply = args[1]
+		c.pa.size = parseSize(args[2])
+		c.pa.szb = args[2]
+	default:
+		return fmt.Errorf(&quot;processPub Parse Error: '%s'&quot;, arg)
+	}
+  ...
+}
+</code></pre>
+
+<h2 id="4-processmsg">4. processMsg</h2>
+
+<p>写消息会追加client的outbound的buff里：</p>
+
+<pre><code class="language-go">// processMsg is called to process an inbound msg from a client.
+func (c *client) processMsg(msg []byte) {
+  ...
+	var r *SublistResult
+  // 找到所有订阅者
+	subject := string(c.pa.subject)
+	r = srv.sl.Match(subject)
+	c.in.results[subject] = r
+	fanout := len(r.psubs) + len(r.qsubs)
+	for _, sub := range r.psubs {
+    // 发送消息
+		mh := c.msgHeader(msgh[:si], sub)
+		c.deliverMsg(sub, mh, msg)
+	}
+  ...
+}
+
+func (c *client) deliverMsg(sub *subscription, mh, msg []byte) bool {
+	client := sub.client
+	client.mu.Lock()
+	srv := client.srv
+	client.outMsgs++
+	client.outBytes += msgSize
+
+	// 加入message head和msg到out buf
+	client.queueOutbound(mh)
+	client.queueOutbound(msg)
+
+}
+
+func (c *client) queueOutbound(data []byte) {
+    ...
+		c.out.p = append(c.out.p, data...)
+    ...
+}
+
+</code></pre>
 
       </div>
     </div>

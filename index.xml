@@ -7,10 +7,56 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
     <copyright>(c) 2013 -- 2017</copyright>
-    <lastBuildDate>Mon, 15 Oct 2018 14:15:36 +0800</lastBuildDate>
+    <lastBuildDate>Tue, 16 Oct 2018 14:15:36 +0800</lastBuildDate>
     
 	<atom:link href="http://blog.jerry-tao.com/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>NATS源码导读02</title>
+      <link>http://blog.jerry-tao.com/2018/10/16/nats-2/</link>
+      <pubDate>Tue, 16 Oct 2018 14:15:36 +0800</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2018/10/16/nats-2/</guid>
+      <description>1. WriteLoop 写循环相对来说比较简单，只要达到触发条件就flush一次：
+func (c *client) writeLoop() { ... for { c.mu.Lock() if waitOk &amp;amp;&amp;amp; (c.out.pb == 0 || c.out.fsp &amp;gt; 0) &amp;amp;&amp;amp; len(c.out.nb) == 0 &amp;amp;&amp;amp; !c.flags.isSet(clearConnection) { c.out.sg.Wait() } // Flush data waitOk = c.flushOutbound() ... } }  这里主要检测的是cliet里的out对象，out就是写缓存
+2. ReadLoop readLoop会更复杂一些，里面的工作主要包含：读数据-&amp;gt;处理数据-&amp;gt;调整缓存，主要跟读取相关的数据在client的in里面：
+func (c *client) readLoop() { b := make([]byte, c.in.rsz) ... for { n, err := nc.Read(b) // 读数据 if err := c.parse(b[:n]); err != nil { // parse 数据 .</description>
+    </item>
+    
+    <item>
+      <title>NATS源码导读03</title>
+      <link>http://blog.jerry-tao.com/2018/10/16/nats-3/</link>
+      <pubDate>Tue, 16 Oct 2018 14:15:36 +0800</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2018/10/16/nats-3/</guid>
+      <description>0. Trie树 续上，在继续看nats如何处理命令之前，先看一下如何处理订阅之间的关联。
+在继续之前需要了解trie树，字典树也算是很经典的一种数据结构了，大体结构如图：
+其中最左侧节点连续下来就代表了aaaa，更多细节百度之，在nats里存储topic的结构就是一颗trie树。
+具体的协议我们只查看sub和pub两个命令。
+1. Sublist nats里的sublist结构如下：
+type node struct { next *level psubs map[*subscription]*subscription qsubs map[string](map[*subscription]*subscription) plist []*subscription } type level struct { nodes map[string]*node pwc, fwc *node }  分隔符是基于.，例如最左侧的就代表了foo.bar topic。
+由于nats是支持publish和queue publish的，所以每个节点会同时存储psubs和qsubs：
+其中每个subscription存储了subject和对应的*client：
+type subscription struct { client *client subject []byte }  所以只要找到了对应的topic需要发送出去的client就都可以找到了。
+这里比较关键的操作是Insert，Remove和Match。
+在创建server的时候，就会创建一个新的sublist：
+func New(opts *Options) *Server { ... s := &amp;amp;Server{ configFile: opts.ConfigFile, info: info, prand: rand.New(rand.NewSource(time.Now().UnixNano())), sl: NewSublist(),// 新建sublist opts: opts, done: make(chan bool, 1), start: now, configTime: now, } }  2.</description>
+    </item>
+    
+    <item>
+      <title>NATS源码导读01</title>
+      <link>http://blog.jerry-tao.com/2018/10/15/nats-01/</link>
+      <pubDate>Mon, 15 Oct 2018 14:15:36 +0800</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2018/10/15/nats-01/</guid>
+      <description>0. Intro NATS是一款基于Go语言的MQ，主要卖点是high thoughout，秒千万级别的吞吐量。当然没有银弹，高吞吐的一个原因就在于功能其实非常简单，可以说只实现了MQ的最基本功能，所以其自我描述更喜欢叫messaging system，主要缺失的功能包括持久化等。
+之所以选择读NATS的源码而不是rabbitMQ等，主要原因也是因为他简单但是又足够，如果想要持久化功能还可以参考NATS Streaming，除去依赖和测试代码NATS只有不足8000行代码。
+1. Codes git-commit: 899b0849344f6b8386c8da40f4cbbd0f25f74396
+LOC:
+------------------------------------------------------------------------------- Language files blank comment code ------------------------------------------------------------------------------- Go 21 1157 1697 7936 ------------------------------------------------------------------------------- SUM: 21 1157 1697 7936 -------------------------------------------------------------------------------  Tree:
+├── auth.go 权限管理相关 ├── ciphersuites.go 加密协议 ├── client.go 连接处理 ├── const.go 常量 ├── errors.go 错误 ├── log.go 日志接口 ├── monitor.go 提供http查看服务器信息 ├── monitor_sort_opts.go 同上 ├── nkey.go 依赖，未深入，看起来像是自己写了一个加密解密的算法 ├── opts.go 配置 ├── parser.go 协议parser ├── reload.go reload服务器 ├── ring.</description>
+    </item>
     
     <item>
       <title>测试环境的自动化处理</title>
@@ -100,6 +146,15 @@ type Request struct { Method string // 具体调用的方法 Protocol string // 
       <guid>http://blog.jerry-tao.com/2018/02/28/go-liveload/</guid>
       <description>Just like ruby on rails, liveload changes.
 # Dockerfile FROM golang:1.9.1 # Install dep RUN curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh WORKDIR /go/src/APP ADD Gopkg.toml Gopkg.toml ADD Gopkg.lock Gopkg.lock RUN dep ensure -vendor-only # Install gin RUN go get github.com/codegangsta/gin COPY ./src ./src WORKDIR /go/src/APP/src # App listen on 8888, gin proxy listen on 3000 EXPOSE 3000 CMD [&amp;quot;gin&amp;quot;,&amp;quot;-i&amp;quot;,&amp;quot;-a&amp;quot;,&amp;quot;8888&amp;quot;,&amp;quot;run&amp;quot;]  # docker-compose-dev.yml version: &#39;2.1&#39; services: app: build: . command: gin -i -a 8888 run ports: - &amp;quot;127.</description>
+    </item>
+    
+    <item>
+      <title>About</title>
+      <link>http://blog.jerry-tao.com/about/</link>
+      <pubDate>Thu, 28 Dec 2017 16:21:28 +0800</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/about/</guid>
+      <description>Good For You</description>
     </item>
     
     <item>
