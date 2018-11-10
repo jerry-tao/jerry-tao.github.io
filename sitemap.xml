@@ -3,12 +3,12 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
-    <loc>http://blog.jerry-tao.com/2018/10/16/nats-2/</loc>
-    <lastmod>2018-10-16T14:15:36+08:00</lastmod>
+    <loc>http://blog.jerry-tao.com/2018/10/17/nats-3/</loc>
+    <lastmod>2018-10-17T14:15:36+08:00</lastmod>
   </url>
   
   <url>
-    <loc>http://blog.jerry-tao.com/2018/10/16/nats-3/</loc>
+    <loc>http://blog.jerry-tao.com/2018/10/16/nats-2/</loc>
     <lastmod>2018-10-16T14:15:36+08:00</lastmod>
   </url>
   
@@ -248,13 +248,13 @@
   
   <url>
     <loc>http://blog.jerry-tao.com/</loc>
-    <lastmod>2018-10-16T14:15:36+08:00</lastmod>
+    <lastmod>2018-10-17T14:15:36+08:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>http://blog.jerry-tao.com/categories/lbr/</loc>
-    <lastmod>2018-10-16T14:15:36+08:00</lastmod>
+    <lastmod>2018-10-17T14:15:36+08:00</lastmod>
     <priority>0</priority>
   </url>
   
@@ -266,7 +266,7 @@
   
   <url>
     <loc>http://blog.jerry-tao.com/posts/</loc>
-    <lastmod>2018-10-16T14:15:36+08:00</lastmod>
+    <lastmod>2018-10-17T14:15:36+08:00</lastmod>
     <priority>0</priority>
   </url>
   

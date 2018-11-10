@@ -3,8 +3,8 @@
 <head>
   
   <meta charset="utf-8">
-  <title>Posts</title>
-  <meta name="description" content="Posts">
+  <title>NATS源码导读03</title>
+  <meta name="description" content="NATS源码导读03">
   <meta name="author" content="">
   
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -337,8 +337,6 @@ body {
 
   
   
-  <link href="http://blog.jerry-tao.com/posts/index.xml" rel="alternate" type="application/rss+xml" title="Jerry Tao Feed" />
-  
 
   <meta name="generator" content="Hugo 0.37" />
 
@@ -420,576 +418,200 @@ body {
 </div>
 
 
-
 <div class="pure-g">
   <div class="pure-u-1-24 pure-u-md-1-6"></div>
   <div class="pure-u-11-12 pure-u-md-2-3">
-    <div class="post-content">
-      <p class="posts-name">Posts:</p>
+    <div class="post">
 
-      <ul class="posts">
+      <div class="post-title">
+        <p class="footnote">
+        <time class="">10-17-2018</time>
         
         
+        |
         
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2018/10/17/nats-3/">NATS源码导读03</a>
+        
 
-          <p class="footnote">
-          <time datetime="10-17-2018">
-            10-17-2018
-          </time>
-          </p>
-        </li>
         
+        categories: [<a href="http://blog.jerry-tao.com/categories/lbr">lbr</a> ]
         
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2018/10/16/nats-2/">NATS源码导读02</a>
 
-          <p class="footnote">
-          <time datetime="10-16-2018">
-            10-16-2018
-          </time>
-          </p>
-        </li>
         
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2018/10/15/nats-01/">NATS源码导读01</a>
+        </p>
+        <h1>NATS源码导读03</h1>
+      </div>
 
-          <p class="footnote">
-          <time datetime="10-15-2018">
-            10-15-2018
-          </time>
-          </p>
-        </li>
+      <div class="post-content">
         
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2018/10/15/devauto/">测试环境的自动化处理</a>
 
-          <p class="footnote">
-          <time datetime="10-15-2018">
-            10-15-2018
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2018/03/06/mia-3/">Microservice In Action: Transport(2)</a>
+<h2 id="0-trie树">0. Trie树</h2>
 
-          <p class="footnote">
-          <time datetime="10-03-2018">
-            10-03-2018
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2018/03/06/mia-2/">Microservice In Action: Transport(1)</a>
+<p>续上，在继续看nats如何处理命令之前，先看一下如何处理订阅之间的关联。</p>
 
-          <p class="footnote">
-          <time datetime="10-02-2018">
-            10-02-2018
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2018/03/06/mia-1/">Microservice In Action: 从service开始</a>
+<p>在继续之前需要了解trie树，字典树也算是很经典的一种数据结构了，大体结构如图：</p>
 
-          <p class="footnote">
-          <time datetime="10-01-2018">
-            10-01-2018
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2018/03/06/json-in-go/">Json In Go</a>
+<p><img src="/images/trie.jpg" alt="trie" /></p>
 
-          <p class="footnote">
-          <time datetime="03-06-2018">
-            03-06-2018
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2018/02/28/go-liveload/">Go Liveload With Docker And Gin</a>
+<p>其中最左侧节点连续下来就代表了aaaa，更多细节百度之，在nats里存储topic的结构就是一颗trie树。</p>
 
-          <p class="footnote">
-          <time datetime="02-28-2018">
-            02-28-2018
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2017/08/08/ruby_process/">Ruby Process</a>
+<p>具体的协议我们只查看sub和pub两个命令。</p>
 
-          <p class="footnote">
-          <time datetime="08-08-2017">
-            08-08-2017
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2017/03/16/cache_cluster_in_ruby_demo/">杂七杂八的缓存</a>
+<h2 id="1-sublist">1. Sublist</h2>
 
-          <p class="footnote">
-          <time datetime="03-16-2017">
-            03-16-2017
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2017/03/08/gateway_in_mruby/">实现一个简单的Gateway</a>
+<p>nats里的sublist结构如下：</p>
 
-          <p class="footnote">
-          <time datetime="03-08-2017">
-            03-08-2017
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2017/02/22/rails_routes_2/">Rails Routes 源码(2)</a>
+<p><img src="/images/sublist.png" alt="trie" /></p>
 
-          <p class="footnote">
-          <time datetime="02-22-2017">
-            02-22-2017
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2017/02/15/rails_routes_1/">Rails Routes 源码(1)</a>
+<pre><code class="language-go">type node struct {
+	next  *level
+	psubs map[*subscription]*subscription
+	qsubs map[string](map[*subscription]*subscription)
+	plist []*subscription
+}
 
-          <p class="footnote">
-          <time datetime="02-15-2017">
-            02-15-2017
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2017/02/07/load_balance/">Load Balance简介</a>
+type level struct {
+	nodes    map[string]*node
+	pwc, fwc *node
+}
+</code></pre>
 
-          <p class="footnote">
-          <time datetime="02-07-2017">
-            02-07-2017
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2017/02/03/http2/">HTTP2简介</a>
+<p>分隔符是基于.，例如最左侧的就代表了foo.bar topic。</p>
 
-          <p class="footnote">
-          <time datetime="02-03-2017">
-            02-03-2017
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2016/09/09/lazy_hash/">使用延迟加载来优化redis请求</a>
+<p>由于nats是支持publish和queue publish的，所以每个节点会同时存储psubs和qsubs：</p>
 
-          <p class="footnote">
-          <time datetime="09-09-2016">
-            09-09-2016
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2016/09/05/redis_ziplist/">Redis Ziplist总结</a>
+<p>其中每个subscription存储了subject和对应的*client：</p>
 
-          <p class="footnote">
-          <time datetime="09-05-2016">
-            09-05-2016
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2016/03/15/order_no_demo/">高并发订单号池</a>
+<pre><code class="language-go">type subscription struct {
+	client  *client
+	subject []byte
+}
+</code></pre>
 
-          <p class="footnote">
-          <time datetime="03-15-2016">
-            03-15-2016
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2016/01/14/singleton_class_for_dummy/">Singleton Class简明教程</a>
+<p>所以只要找到了对应的topic需要发送出去的client就都可以找到了。</p>
 
-          <p class="footnote">
-          <time datetime="01-14-2016">
-            01-14-2016
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2016/01/13/ruby_hook_methods/">Ruby Hook Methods</a>
+<p>这里比较关键的操作是Insert，Remove和Match。</p>
 
-          <p class="footnote">
-          <time datetime="01-13-2016">
-            01-13-2016
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2016/01/12/load_code_in_ruby/">Ruby加载代码的二三事</a>
+<p>在创建server的时候，就会创建一个新的sublist：</p>
 
-          <p class="footnote">
-          <time datetime="01-12-2016">
-            01-12-2016
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2016/01/11/all_about_const_lookup/">关于Constant查找的一切(译)</a>
+<pre><code class="language-go">func New(opts *Options) *Server {
+  ...
+	s := &amp;Server{
+		configFile: opts.ConfigFile,
+		info:       info,
+		prand:      rand.New(rand.NewSource(time.Now().UnixNano())),
+		sl:         NewSublist(),// 新建sublist
+		opts:       opts,
+		done:       make(chan bool, 1),
+		start:      now,
+		configTime: now,
+	}
 
-          <p class="footnote">
-          <time datetime="01-11-2016">
-            01-11-2016
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2015/09/29/rails_log_process/">Rails Log Process</a>
+}
+</code></pre>
 
-          <p class="footnote">
-          <time datetime="09-29-2015">
-            09-29-2015
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2015/08/14/move_development_to_docer/">Move Rails Development to Docker</a>
+<h2 id="2-processsub">2. processSub</h2>
 
-          <p class="footnote">
-          <time datetime="08-14-2015">
-            08-14-2015
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2015/05/06/a_little_piece_code_in_action_controller/">A Little Piece Code in ActionController</a>
+<p>processSub相对来说比较简单，只要插入到我们上面的sublist中即可：</p>
 
-          <p class="footnote">
-          <time datetime="05-06-2015">
-            05-06-2015
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2015/03/12/active_support_backtrace/">ActiveSupport BacktraceCleaner</a>
+<pre><code class="language-go">func (c *client) processSub(argo []byte) (err error) {
+	sub := &amp;subscription{client: c}
+	switch len(args) { // 判断是不是queue
+	case 2:
+		sub.subject = args[0]
+		sub.queue = nil
+		sub.sid = args[1]
+	case 3:
+		sub.subject = args[0]
+		sub.queue = args[1]
+		sub.sid = args[2]
+	default:
+		return fmt.Errorf(&quot;processSub Parse Error: '%s'&quot;, arg)
+	}
 
-          <p class="footnote">
-          <time datetime="03-12-2015">
-            03-12-2015
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2015/03/06/angular_best_practices/">Angular Best Practices</a>
+	sid := string(sub.sid)
+	if c.subs[sid] == nil { // 在client里维护自己的subscription，当断开连接的时候需要在sublist里删除
+		c.subs[sid] = sub
+		if c.srv != nil {
+			err = c.srv.sl.Insert(sub) // 插入到sublist当中
+			if err != nil {
+				delete(c.subs, sid)
+			} else {
+				shouldForward = c.typ != ROUTER
+			}
+		}
+	}
 
-          <p class="footnote">
-          <time datetime="03-06-2015">
-            03-06-2015
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2015/03/03/active_support_concern/">ActiveSupport Concern</a>
+}
+</code></pre>
 
-          <p class="footnote">
-          <time datetime="03-03-2015">
-            03-03-2015
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2015/02/27/active_support_get_controller_everywhere/">ActiveSupport PerThreadRegistry：Get Controller Everywhere</a>
+<h2 id="3-processpub">3. processPub</h2>
 
-          <p class="footnote">
-          <time datetime="02-27-2015">
-            02-27-2015
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2015/02/23/active_support_notifications/">ActiveSupport Notifications</a>
+<p>在parser里面，处理完pub之后状态机并没有停止，还会继续处理payload部分，也就是说一个pub message会触发processPub和processMsg两个操作：</p>
 
-          <p class="footnote">
-          <time datetime="02-23-2015">
-            02-23-2015
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2015/02/22/active_support_aliasing/">ActiveSupport Aliasing</a>
+<pre><code class="language-go">func (c *client) processPub(arg []byte) error {
+  ...
+  // 主要是写pubArg，在processMsg的时候会用到。
+	switch len(args) {
+	case 2:
+		c.pa.subject = args[0]
+		c.pa.reply = nil
+		c.pa.size = parseSize(args[1])
+		c.pa.szb = args[1]
+	case 3:
+		c.pa.subject = args[0]
+		c.pa.reply = args[1]
+		c.pa.size = parseSize(args[2])
+		c.pa.szb = args[2]
+	default:
+		return fmt.Errorf(&quot;processPub Parse Error: '%s'&quot;, arg)
+	}
+  ...
+}
+</code></pre>
 
-          <p class="footnote">
-          <time datetime="02-22-2015">
-            02-22-2015
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2015/02/09/rails_gems_1/">Rails常用Gem</a>
+<h2 id="4-processmsg">4. processMsg</h2>
 
-          <p class="footnote">
-          <time datetime="02-09-2015">
-            02-09-2015
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2015/02/06/rails_test_details_2/">Rails Test Details 2: Model Test</a>
+<p>写消息会追加client的outbound的buff里：</p>
 
-          <p class="footnote">
-          <time datetime="02-06-2015">
-            02-06-2015
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2015/02/05/rails_test_details_1/">Rails Test Details 1: Build Data</a>
+<pre><code class="language-go">// processMsg is called to process an inbound msg from a client.
+func (c *client) processMsg(msg []byte) {
+  ...
+	var r *SublistResult
+  // 找到所有订阅者
+	subject := string(c.pa.subject)
+	r = srv.sl.Match(subject)
+	c.in.results[subject] = r
+	fanout := len(r.psubs) + len(r.qsubs)
+	for _, sub := range r.psubs {
+    // 发送消息
+		mh := c.msgHeader(msgh[:si], sub)
+		c.deliverMsg(sub, mh, msg)
+	}
+  ...
+}
 
-          <p class="footnote">
-          <time datetime="02-05-2015">
-            02-05-2015
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2015/02/04/use_postgresql_uuid_in_rails/">Use Postgresql uuid in Rails</a>
+func (c *client) deliverMsg(sub *subscription, mh, msg []byte) bool {
+	client := sub.client
+	client.mu.Lock()
+	srv := client.srv
+	client.outMsgs++
+	client.outBytes += msgSize
 
-          <p class="footnote">
-          <time datetime="02-04-2015">
-            02-04-2015
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2015/01/27/active_support_inflector/">ActiveSupport::Inflector</a>
+	// 加入message head和msg到out buf
+	client.queueOutbound(mh)
+	client.queueOutbound(msg)
 
-          <p class="footnote">
-          <time datetime="01-27-2015">
-            01-27-2015
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2014/12/01/i18n_with_rails_and_angular/">I18n with Rails and Angular</a>
+}
 
-          <p class="footnote">
-          <time datetime="12-01-2014">
-            12-01-2014
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2014/02/18/active_support-configurable-in-rails/">ActiveSupport::Configurable</a>
+func (c *client) queueOutbound(data []byte) {
+    ...
+		c.out.p = append(c.out.p, data...)
+    ...
+}
 
-          <p class="footnote">
-          <time datetime="02-18-2014">
-            02-18-2014
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2014/02/07/custom-id-with-mongoid-in-rails/">自定义mongoid的model id</a>
+</code></pre>
 
-          <p class="footnote">
-          <time datetime="02-07-2014">
-            02-07-2014
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2014/01/22/long-weibo/">简单的长微博示例</a>
-
-          <p class="footnote">
-          <time datetime="01-22-2014">
-            01-22-2014
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2014/01/21/wkhtmltoimg-intro/">wkhtmltoimage简介</a>
-
-          <p class="footnote">
-          <time datetime="01-21-2014">
-            01-21-2014
-          </time>
-          </p>
-        </li>
-        
-        
-        
-        <li>
-          
-          <a class="post-list" href="http://blog.jerry-tao.com/2014/01/20/ruby-std-lib-open3/">Ruby标准库学习：Open3</a>
-
-          <p class="footnote">
-          <time datetime="01-20-2014">
-            01-20-2014
-          </time>
-          </p>
-        </li>
-        
-        
-      </ul>
+      </div>
     </div>
   </div>
   <div class="pure-u-1-24 pure-u-md-1-6"></div>
@@ -1011,7 +633,7 @@ body {
 
         </ul>
         <a href="#" class="pure-menu-link pull-right" id="gototop-btn">↑↑</a>
-        <a href="http://blog.jerry-tao.com/posts/index.xml" class="pure-menu-link pull-right">RSS</a>
+        <a href="" class="pure-menu-link pull-right">RSS</a>
       </div>
       
       <p id="foot-copyright">(c) 2013 -- 2017</p>
