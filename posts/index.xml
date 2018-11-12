@@ -7,10 +7,40 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-CN</language>
     <copyright>(c) 2013 -- 2017</copyright>
-    <lastBuildDate>Wed, 17 Oct 2018 14:15:36 +0800</lastBuildDate>
+    <lastBuildDate>Mon, 12 Nov 2018 14:15:36 +0800</lastBuildDate>
     
 	<atom:link href="http://blog.jerry-tao.com/posts/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Leetcode中的位操作</title>
+      <link>http://blog.jerry-tao.com/2018/11/12/bit-op/</link>
+      <pubDate>Mon, 12 Nov 2018 14:15:36 +0800</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2018/11/12/bit-op/</guid>
+      <description>对于大多数人来说位操作的知识应该都早就还给老师了，所以刷lc的bit op类题会有些负担，所以简单介绍下lc里关于bit op需要的知识。
+首先是基本的操作 &amp;amp; |，这个即使还给老师也很容易想起来，跟我们常用的逻辑操作符基本一致：
+1 &amp;amp; 1 = 1 1 &amp;amp; 0 = 0 1 | 0 = 1 1 | 1 = 1  异或操作可能需要回忆一下：
+1 ^ 1 = 0 1 ^ 0 = 1 0 ^ 0 = 0  所以从异或的特点可以得出两个结论：n^n=0，n^0=n。
+这个结论适用于 LC136，数组中每个数字都出现两次，只有一个出现一次，找到出现一次的数字：
+func singleNumber(nums []int) int { res:=0 for _,v:=range nums{res^=v} return res }  基本一样的还有LC389
+接下来是左移和右移操作 &amp;lt;&amp;lt; &amp;gt;&amp;gt;:
+0001&amp;lt;&amp;lt;1 = 0010 1000&amp;gt;&amp;gt;1 = 0100  这个使用的时候要注意不要溢出，同时也可以得出结论&amp;lt;&amp;lt;一次相当于*2，&amp;gt;&amp;gt;一次相当于/2。</description>
+    </item>
+    
+    <item>
+      <title>NATS源码导读04</title>
+      <link>http://blog.jerry-tao.com/2018/11/11/nats-4/</link>
+      <pubDate>Sun, 11 Nov 2018 14:15:36 +0800</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2018/11/11/nats-4/</guid>
+      <description>0. Intro nats的集群模型其实很简单，因为nats本身并不支持数据存储，所以不涉及到数据一致性问题，集群只是做了个简单的route功能。几点基础知识：
+ 所有的node之间互相链接 新加入的node连接到一个node之后就会跟其他的node建立新连接 收到client的消息之后会转发给其他node一份 从其他node收到的信息只发给client不会再次转发  所以按照如下顺序简单介绍一下：
+ 启动一个支持集群的node 启动一个新node并加入之前node 处理新node加入的信息 转发client信息到其他node 接收到其他的node的转发信息  1. 启动server  gnatsd -p 4222 -cluster nats://127.0.0.1:5222  首先还是要回到server.Start()方法：
+if opts.Cluster.Port != 0 { s.startGoRoutine(func() { s.StartRouting(clientListenReady) }) }  当配置中的cluster不为空的时候就会启动一个对node的监听：
+func (s *Server) StartRouting(clientListenReady chan struct{}) { defer s.grWG.Done() // 等待监听客户端先结束之后再启动 &amp;lt;-clientListenReady // 等待启动监听其他routes之后再加入指定的node ch := make(chan struct{}) go s.routeAcceptLoop(ch) &amp;lt;-ch // 当有指定其他routes的时候加入其他node s.solicitRoutes(s.getOpts().Routes) }  启动监听routes的代码跟启动正常server监听的代码基本一致，每当有新连接的时候启动一个新的goroutine，这里进入的也是createRoute，跟下面的建立连接是同一个方法：
+s.startGoRoutine(func() { s.createRoute(conn, nil) s.</description>
+    </item>
     
     <item>
       <title>NATS源码导读03</title>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Alg on Jerry Tao</title>
+    <link>http://blog.jerry-tao.com/categories/alg/</link>
+    <description>Recent content in Alg on Jerry Tao</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-CN</language>
+    <copyright>(c) 2013 -- 2017</copyright>
+    <lastBuildDate>Mon, 12 Nov 2018 14:15:36 +0800</lastBuildDate>
+    
+	<atom:link href="http://blog.jerry-tao.com/categories/alg/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Leetcode中的位操作</title>
+      <link>http://blog.jerry-tao.com/2018/11/12/bit-op/</link>
+      <pubDate>Mon, 12 Nov 2018 14:15:36 +0800</pubDate>
+      
+      <guid>http://blog.jerry-tao.com/2018/11/12/bit-op/</guid>
+      <description>对于大多数人来说位操作的知识应该都早就还给老师了，所以刷lc的bit op类题会有些负担，所以简单介绍下lc里关于bit op需要的知识。
+首先是基本的操作 &amp;amp; |，这个即使还给老师也很容易想起来，跟我们常用的逻辑操作符基本一致：
+1 &amp;amp; 1 = 1 1 &amp;amp; 0 = 0 1 | 0 = 1 1 | 1 = 1  异或操作可能需要回忆一下：
+1 ^ 1 = 0 1 ^ 0 = 1 0 ^ 0 = 0  所以从异或的特点可以得出两个结论：n^n=0，n^0=n。
+这个结论适用于 LC136，数组中每个数字都出现两次，只有一个出现一次，找到出现一次的数字：
+func singleNumber(nums []int) int { res:=0 for _,v:=range nums{res^=v} return res }  基本一样的还有LC389
+接下来是左移和右移操作 &amp;lt;&amp;lt; &amp;gt;&amp;gt;:
+0001&amp;lt;&amp;lt;1 = 0010 1000&amp;gt;&amp;gt;1 = 0100  这个使用的时候要注意不要溢出，同时也可以得出结论&amp;lt;&amp;lt;一次相当于*2，&amp;gt;&amp;gt;一次相当于/2。</description>
+    </item>
+    
+  </channel>
+</rss>

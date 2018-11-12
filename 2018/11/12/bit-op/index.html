@@ -3,8 +3,8 @@
 <head>
   
   <meta charset="utf-8">
-  <title>关于Constant查找的一切(译)</title>
-  <meta name="description" content="关于Constant查找的一切(译)">
+  <title>Leetcode中的位操作</title>
+  <meta name="description" content="Leetcode中的位操作">
   <meta name="author" content="">
   
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -433,7 +433,7 @@ body {
 
       <div class="post-title">
         <p class="footnote">
-        <time class="">01-11-2016</time>
+        <time class="">11-12-2018</time>
         
         
         |
@@ -441,236 +441,222 @@ body {
         
 
         
-        categories: [<a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
+        categories: [<a href="http://blog.jerry-tao.com/categories/alg">alg</a> ]
         
 
         
         </p>
-        <h1>关于Constant查找的一切(译)</h1>
+        <h1>Leetcode中的位操作</h1>
       </div>
 
       <div class="post-content">
-        
+        <p>对于大多数人来说位操作的知识应该都早就还给老师了，所以刷lc的bit op类题会有些负担，所以简单介绍下lc里关于bit op需要的知识。</p>
 
-<p><strong><em>注：此文翻译整理自<a href="https://cirw.in/blog/constant-lookup，推荐关注，pry主要贡献人">https://cirw.in/blog/constant-lookup，推荐关注，pry主要贡献人</a></em></strong></p>
+<p>首先是基本的操作 <code>&amp; |</code>，这个即使还给老师也很容易想起来，跟我们常用的逻辑操作符基本一致：</p>
 
-<p>使用常量很简单，理解如何查找常量的很麻烦。</p>
-
-<p>虽然一句话就可以说清楚常量查找，<strong><em>依次在Module.nesting, Module.nesting.first.ancestors中查找，如果Module.nesting.first是nil，则在Object.ancestors中查找。</em></strong>，但是为了更好的理解，我们还是举几个例子吧。</p>
-
-<p><img src="/assets/images/for_example.jpg" alt="举几个栗子" /></p>
-
-<h3 id="module-nesting">Module.nesting</h3>
-
-<p>Ruby首先会根据词法作用域(lexical scope)周围的module或者classes的关联的常量来查找:</p>
-
-<pre><code>module A
-  module B; end
-  module C
-    module D
-      B == A::B
-    end
-  end
-end
+<pre><code>1 &amp; 1 = 1
+1 &amp; 0 = 0
+1 | 0 = 1
+1 | 1 = 1
 </code></pre>
 
-<p>上面的例子里在D中的B首先会查找： A::C::D::B (不存在), 然后 A::C::B (不存在), 最后 A::B (找到了)。</p>
+<p>异或操作可能需要回忆一下：</p>
 
-<p>跟ruby里的其他东西一样, 查找常量的namespace chains也是在运行时通过Module.nesting可以实现自省的（运行时知道自己的Module.nesting）：</p>
-
-<pre><code>module A
-  module C
-    module D
-      Module.nesting == [A::C::D, A::C, A]
-    end
-  end
-end
+<pre><code>1 ^ 1 = 0
+1 ^ 0 = 1
+0 ^ 0 = 0
 </code></pre>
 
-<p>如果你尝试过用简写的声明方式来重打开一个module，你可能已经注意到不使用完整的namespace是无法访问其他常量的。这是因为外面的namespace并没有添加到Module.nesting当中：</p>
+<p>所以从异或的特点可以得出两个结论：n^n=0，n^0=n。</p>
 
-<pre><code>module A
-  module B; end
-end
+<p>这个结论适用于 <a href="https://leetcode-cn.com/problems/single-number/description/">LC136</a>，数组中每个数字都出现两次，只有一个出现一次，找到出现一次的数字：</p>
 
-# 错误
-module A::C
-  B
-end
-
-# 正确
-module A
-  module D
-    B
-  end
-end
-# NameError: uninitialized constant A::C::B
+<pre><code class="language-go">func singleNumber(nums []int) int {
+    res:=0
+    for _,v:=range nums{res^=v}
+    return res
+}
 </code></pre>
 
-<p>上面错误的例子中，如果要使用B，那么Module.nesting里必须包含A, 但是上面的nesting里只有[A::C]</p>
+<p>基本一样的还有<a href="https://leetcode-cn.com/problems/find-the-difference/description/">LC389</a></p>
 
-<h3 id="ancestors">Ancestors</h3>
+<p>接下来是左移和右移操作 <code>&lt;&lt; &gt;&gt;</code>:</p>
 
-<p>如果在Module.nesting中找不到, Ruby就会在当前打开class或者module的祖先中查找。</p>
-
-<pre><code>class A
-  module B; end
-end
-
-class C &lt; A
-  B == A::B
-end
+<pre><code>0001&lt;&lt;1 = 0010
+1000&gt;&gt;1 = 0100
 </code></pre>
 
-<p>当前打开是指最里面的class或者module，例如上面查找B的C。一个常见的误解就是常量查找会使用self.class，例如上面也许觉得B应该查找C::B，但实际上并不会这样查找，参考下面的例子。</p>
+<p>这个使用的时候要注意不要溢出，同时也可以得出结论&lt;&lt;一次相当于*2，&gt;&gt;一次相当于/2。</p>
 
-<pre><code>class A
-  def get_c; C; end
-end
+<p>同时我们可以基于这个特性来写出一个按位操作的方法：</p>
 
-class B &lt; A
-  module C; end
-end
-
-B.new.get_c #self.class是B，但是并不会查找B::C 当前打开类是A，
-# NameError: uninitialized constant A::C
+<pre><code>// 最大不超过32bit
+for i:=31;i&gt;=0;i--{
+  1&lt;&lt;i
+}
 </code></pre>
 
-<h3 id="object">Object::</h3>
+<p>以上代码可以用来按位比较对应的bit，因为每次循环对1进行移位操作后结果的值如下：</p>
 
-<p>在顶级作用域的时候，Module.nesting是[]，所以常量直接在当前打开的class和他的祖先里查找，虽然你看不到，但是顶级作用域里的当前打开类是Object。</p>
-
-<pre><code>class Object
-  module C; end
-end
-C == Object::C
+<pre><code>0010000
+0001000
+0000100
+0000010
+0000001
 </code></pre>
 
-<p>虽然还没有说，但是你也应该注意到，新定义的常量也会在当前打开类里进行定义，所以顶级作用域里定义的常量也会在Object里进行定义：</p>
+<p>该方法可以适用于<a href="https://leetcode-cn.com/problems/hamming-distance/description/">LC461</a>, <a href="https://leetcode-cn.com/problems/number-complement/description/">LC476</a>等，看一下LC476的解法：</p>
 
-<pre><code>module C; end
-Object::C == C
+<pre><code class="language-go">func findComplement(num int) int {
+    flag:=false
+    for i:=31;i&gt;=0;i--{
+        // 从最高位开始找到不为0的第一个
+        if (num &amp; (1&lt;&lt;uint(i)))!=0 {flag = true}
+        // 对该位跟1进行异或
+        if flag {num ^= (1&lt;&lt;uint(i))}
+    }
+    return num
+}
 </code></pre>
 
-<p>这个就解释了为什么在顶级作用域里定义的常量在哪里都可以使用，因为在ruby里大部分类都是Object的子类，所以Object总是在其他类的祖先链里，所以在顶级作用域里定义的常量在其他地方都可以使用。</p>
+<p>LC461可以用同样的方式得出答案，先对x，y异或然后计算1的个数即可。</p>
 
-<p>所以如果你使用过BasicObject(不是Objet的子类)，你会注意到你在BasicObject内部无法访问顶级作用域的常量。</p>
+<p>不过对于计算一个数字n二进制表达中1的个数我们可以有另一种算法，先看下面的例子：</p>
 
-<pre><code>class Foo &lt; BasicObject
-  Kernel
-end
-# NameError: uninitialized constant Foo::Kernel
+<pre><code>n   = 100000
+n-1 = 011111
+n &amp; n-1 = 0
+
+n   = 101000
+n-1 = 100111
+n &amp; n-1 = 100000
 </code></pre>
 
-<p>如果你想在这种情况下使用，可以使用::Kernel来访问Object::Kernel。</p>
+<p>所以只要在n不为0的时候每次对n与n-1进行&amp;操作就可以消掉最右侧的一个1，所以对于LC461答案如下：</p>
 
-<p>Ruby假设你会把module混入到继承自Object的class之中，所以如果当前打开的是一个module，也会把Object添加到祖先链之中。所以可以在module中使用顶级作用域的常量。</p>
-
-<pre><code>module A; end
-module B;
-  A == Object::A
-end
+<pre><code class="language-go">func hammingDistance(x int, y int) int {
+    res:=0
+    tmp:=x^y
+    for tmp!=0{
+        res++
+        tmp &amp;= (tmp-1)
+    }
+    return res
+}
 </code></pre>
 
-<h3 id="class-eval">class_eval</h3>
+<p>还有单独计算1个数的<a href="https://leetcode-cn.com/problems/number-of-1-bits/description/">LC191</a>, 解法跟上面基本一致。</p>
 
-<p>正如上面提到的，常量会查找当前打开的类或者module，当前打开取决于周围的class或者module关键字，所以，如果你使用class_eval或者module_eval来执行block，这个并不会修改当前打开类。还是会在block定义的作用域内查找。</p>
+<p>同样是计算二进制数字中1的个数，来看一下<a href="https://leetcode-cn.com/problems/counting-bits/description/">LC381</a>，这个题要求的苛刻之处在于线性时间，所以不能用上述方法对每一个进行计算，不过依旧可以用到上面的结论。</p>
 
-<pre><code>class A
-  module B; end
-end
-
-class C
-  module B; end
-  A.class_eval{ B } == C::B
-end
+<pre><code>n   = 110   // 6
+n-1 = 101   // 5
+n &amp; n-1 = 100 // 4
 </code></pre>
 
-<p>不过略复杂的事实是，如果你使用字符串来eval，在class_eval的情况下，Module.nesting中会包含自己的class，在instance_eval的情况下，Module.nesting中则会包含这个object的singleton class。</p>
+<p>对于n来说，n里面1的个数会比n&amp;n-1里面1的个数，如上，所以6里面1的个数就是4的1的个数+1，所以答案如下：</p>
 
-<pre><code>class A
-  module B; end
-end
-
-class C
-  module B; end
-  A.class_eval(&quot;B&quot;) == A::B
-end
+<pre><code class="language-go">func countBits(num int) []int {
+    res:=make([]int,num+1)
+    res[0] = 0
+    for i:=1;i&lt;=num;i++{
+        res[i] = res[i&amp;(i-1)]+1
+    }
+    return res
+}
 </code></pre>
 
-<h3 id="其他细节">其他细节</h3>
+<p>对于计算二进制位中1的个数还有一道<a href="https://leetcode-cn.com/problems/prime-number-of-set-bits-in-binary-representation/description/">LC762</a>，这个的限定了左右区间同时还要求计算1的数量是不是质数，对于计算1的个数没办法像上面那样优化了，因为L的起点就可能很大，所以计算1的个数的方法还是用上面最开始的方式。</p>
 
-<p>最后我想指出，你在一个class的singleton里是无法访问在class内定义的常量。</p>
+<p>不过对于判断质数这道题还是有个小细节的，那就是说给定了最大值范围，这个最大值范围最多不超过20bit就可以完全表示了，所以可以先把20以内的质数缓存一下然后对比个数即可，不需要计算是不是质数：</p>
 
-<pre><code>class A
-  module B; end
-end
-class &lt;&lt; A
-  B
-end
-# NameError: uninitialized constant Class::B
+<pre><code class="language-go">func countPrimeSetBits(L int, R int) int {
+    c :=0
+    m:=map[int]bool{
+        2: true,
+        3: true,
+        5: true,
+        7: true,
+        11: true,
+        13: true,
+        17: true,
+        19: true,
+    }
+    count:=func(n int) int{
+        res:=0
+        for n!=0{
+            res++
+            n = n&amp;(n-1)
+        }
+        return res
+    }
+
+    for i:=L;i&lt;=R;i++{
+        if m[count(i)] {
+            c++
+        }
+    }
+    return c
+}
 </code></pre>
 
-<p>这是因为singleton class的祖先链中并不包含自身的class，直接从Class开始。</p>
+<p>还有一个类似的<a href="https://leetcode-cn.com/problems/power-of-two/description/">LC231</a>，这道题让我们判断一个数字是不是2的幂，上面也已经介绍过&lt;&lt;一次就相当于*2，所以如果一个数字是2的幂必然只有一位是1，其他位数都是0，如下：</p>
 
-<pre><code>class A
-  module B; end
-end
-class &lt;&lt; A; ancestors; end
-[Class, Module, Object, Kernel, BasicObject]
+<pre><code>1 0001
+2 0010
+4 0100
+8 1000
 </code></pre>
 
-<p>相似的情况下，还需要指出已经在Module.nesting里的class的父类并不会出现在Module.nesting之中，如下面的A。</p>
+<p>所以可以简单的使用计算有多少个1的方法查看是否满足只有1个1的情况：</p>
 
-<pre><code>class A
-  module B; end
-end
-
-class C &lt; A
-  class D
-    B
-  end
-end
-# NameError: uninitialized constant C::D::B
+<pre><code class="language-go">func isPowerOfTwo(n int) bool {
+    return (n &gt; 0) &amp;&amp; ((n &amp; (n - 1)==0))
+}
 </code></pre>
 
-<h3 id="总结">总结</h3>
+<p>同样的还有<a href="https://leetcode-cn.com/problems/power-of-four/description/">LC342</a>，这道题让我们判断是不是4的幂，跟上一道题一样，首先确定4的幂必然也是2的幂，其次就是可以看一下符合4的幂的特点：</p>
 
-<p>常量查找并不难，只需要记住查找词法包围的class和module，你可以使用Module.nesting里的第一个值来当作当前打开类或者模块，如果这个值为空，则当前打开类是Object。</p>
-
-<p>下面的代码模拟了ruby内部的常量查找方式，你会注意到我使用字符串作为binding.eval的变量所以Module.nesting是binding的object而不是block。</p>
-
-<pre><code>class Binding
-  def const(name)
-    eval &lt;&lt;-CODE, __FILE__, __LINE__ + 1
-      modules = Module.nesting + (Module.nesting.first || Object).ancestors
-      modules += Object.ancestors if Module.nesting.first.class == Module
-      found = nil
-
-      modules.detect do |mod|
-        found = mod.const_get(#{name.inspect}, false) rescue nil
-      end
-      found or const_missing(#{name.inspect})
-    CODE
-  end
-end
+<pre><code>1  000001
+4  000100
+16 010000
 </code></pre>
 
-<p>(翻译完)</p>
+<p>对比2的幂来说，就是1是每次左移两位，所以1永远在奇数位上，所以我们只需要想办法判断1在奇数位上即可</p>
 
-<h3 id="其他">其他</h3>
-
-<p>实际上常量查找是很好玩的一个过程，可以参考一下Rails实现const_missing和const_get的方法。</p>
-
-<p>可以解决诸多疑惑，例如:</p>
-
-<pre><code>class Person
-end
-
-String.const_get(:Person) # Person
-String::Person # Person
-String::Person::String # String  
+<pre><code>1 000001
+2 000010
+n 010101
+1 &amp; n = 1
+2 &amp; n = 0
 </code></pre>
+
+<p>所以找到N即可，这个结论其实就有点trick了，因为奇数位都是1的值是0x55555555，所以答案如下：</p>
+
+<pre><code class="language-go">func isPowerOfFour(num int) bool {
+    return num&gt;0 &amp;&amp; (num &amp; (num-1))==0 &amp;&amp; (num &amp; 0x55555555) == num
+}
+</code></pre>
+
+<p>然后可以看一下<a href="https://leetcode-cn.com/problems/binary-number-with-alternating-bits/description/">LC693</a>，这道题就是让我们判断一个数字的二进制是不是01交替的，我们可以用上面循环的方法来判断每一位，不过也可以找一下规律：</p>
+
+<pre><code>n        01010101
+n&gt;&gt;1     00101010
+n+n&gt;&gt;1   01111111
+n+n&gt;&gt;1+1 10000000
+&amp;        00000000
+</code></pre>
+
+<p>这个特点主要是凑够一个全是11111的二进制表达，对于全是1的二进制表达只要&amp;+1就应该是0</p>
+
+<pre><code class="language-go">func hasAlternatingBits(n int) bool {
+    return ((n + (n &gt;&gt; 1) + 1) &amp; (n + (n &gt;&gt; 1))) == 0
+}
+</code></pre>
+
+<p>其他的一些有关bit op的题都是基础操作+其他算法例如回溯，dp等等，就不单独介绍了，LC的bit op题列表如下：</p>
+
+<p><a href="https://leetcode-cn.com/list/ohidzdd">https://leetcode-cn.com/list/ohidzdd</a></p>
 
       </div>
     </div>

@@ -3,8 +3,8 @@
 <head>
   
   <meta charset="utf-8">
-  <title>关于Constant查找的一切(译)</title>
-  <meta name="description" content="关于Constant查找的一切(译)">
+  <title>NATS源码导读04</title>
+  <meta name="description" content="NATS源码导读04">
   <meta name="author" content="">
   
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -433,7 +433,7 @@ body {
 
       <div class="post-title">
         <p class="footnote">
-        <time class="">01-11-2016</time>
+        <time class="">11-11-2018</time>
         
         
         |
@@ -441,236 +441,201 @@ body {
         
 
         
-        categories: [<a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
+        categories: [<a href="http://blog.jerry-tao.com/categories/lbr">lbr</a> ]
         
 
         
         </p>
-        <h1>关于Constant查找的一切(译)</h1>
+        <h1>NATS源码导读04</h1>
       </div>
 
       <div class="post-content">
         
 
-<p><strong><em>注：此文翻译整理自<a href="https://cirw.in/blog/constant-lookup，推荐关注，pry主要贡献人">https://cirw.in/blog/constant-lookup，推荐关注，pry主要贡献人</a></em></strong></p>
+<h2 id="0-intro">0. Intro</h2>
 
-<p>使用常量很简单，理解如何查找常量的很麻烦。</p>
+<p>nats的集群模型其实很简单，因为nats本身并不支持数据存储，所以不涉及到数据一致性问题，集群只是做了个简单的route功能。几点基础知识：</p>
 
-<p>虽然一句话就可以说清楚常量查找，<strong><em>依次在Module.nesting, Module.nesting.first.ancestors中查找，如果Module.nesting.first是nil，则在Object.ancestors中查找。</em></strong>，但是为了更好的理解，我们还是举几个例子吧。</p>
+<ul>
+<li>所有的node之间互相链接</li>
+<li>新加入的node连接到一个node之后就会跟其他的node建立新连接</li>
+<li>收到client的消息之后会转发给其他node一份</li>
+<li>从其他node收到的信息只发给client不会再次转发</li>
+</ul>
 
-<p><img src="/assets/images/for_example.jpg" alt="举几个栗子" /></p>
+<p>所以按照如下顺序简单介绍一下：</p>
 
-<h3 id="module-nesting">Module.nesting</h3>
+<ul>
+<li>启动一个支持集群的node</li>
+<li>启动一个新node并加入之前node</li>
+<li>处理新node加入的信息</li>
+<li>转发client信息到其他node</li>
+<li>接收到其他的node的转发信息</li>
+</ul>
 
-<p>Ruby首先会根据词法作用域(lexical scope)周围的module或者classes的关联的常量来查找:</p>
+<h2 id="1-启动server">1. 启动server</h2>
 
-<pre><code>module A
-  module B; end
-  module C
-    module D
-      B == A::B
-    end
-  end
-end
+<pre><code> gnatsd -p 4222 -cluster nats://127.0.0.1:5222
 </code></pre>
 
-<p>上面的例子里在D中的B首先会查找： A::C::D::B (不存在), 然后 A::C::B (不存在), 最后 A::B (找到了)。</p>
+<p>首先还是要回到server.Start()方法：</p>
 
-<p>跟ruby里的其他东西一样, 查找常量的namespace chains也是在运行时通过Module.nesting可以实现自省的（运行时知道自己的Module.nesting）：</p>
-
-<pre><code>module A
-  module C
-    module D
-      Module.nesting == [A::C::D, A::C, A]
-    end
-  end
-end
+<pre><code class="language-go">if opts.Cluster.Port != 0 {
+  s.startGoRoutine(func() {
+    s.StartRouting(clientListenReady)
+  })
+}
 </code></pre>
 
-<p>如果你尝试过用简写的声明方式来重打开一个module，你可能已经注意到不使用完整的namespace是无法访问其他常量的。这是因为外面的namespace并没有添加到Module.nesting当中：</p>
+<p>当配置中的cluster不为空的时候就会启动一个对node的监听：</p>
 
-<pre><code>module A
-  module B; end
-end
+<pre><code class="language-go">func (s *Server) StartRouting(clientListenReady chan struct{}) {
+	defer s.grWG.Done()
 
-# 错误
-module A::C
-  B
-end
+	// 等待监听客户端先结束之后再启动
+	&lt;-clientListenReady
 
-# 正确
-module A
-  module D
-    B
-  end
-end
-# NameError: uninitialized constant A::C::B
+	// 等待启动监听其他routes之后再加入指定的node
+	ch := make(chan struct{})
+	go s.routeAcceptLoop(ch)
+	&lt;-ch
+
+	// 当有指定其他routes的时候加入其他node
+	s.solicitRoutes(s.getOpts().Routes)
+}
 </code></pre>
 
-<p>上面错误的例子中，如果要使用B，那么Module.nesting里必须包含A, 但是上面的nesting里只有[A::C]</p>
+<p>启动监听routes的代码跟启动正常server监听的代码基本一致，每当有新连接的时候启动一个新的goroutine，这里进入的也是createRoute，跟下面的建立连接是同一个方法：</p>
 
-<h3 id="ancestors">Ancestors</h3>
-
-<p>如果在Module.nesting中找不到, Ruby就会在当前打开class或者module的祖先中查找。</p>
-
-<pre><code>class A
-  module B; end
-end
-
-class C &lt; A
-  B == A::B
-end
+<pre><code class="language-go">s.startGoRoutine(func() {
+  s.createRoute(conn, nil)
+  s.grWG.Done()
+})
 </code></pre>
 
-<p>当前打开是指最里面的class或者module，例如上面查找B的C。一个常见的误解就是常量查找会使用self.class，例如上面也许觉得B应该查找C::B，但实际上并不会这样查找，参考下面的例子。</p>
+<h2 id="2-建立node连接">2. 建立node连接</h2>
 
-<pre><code>class A
-  def get_c; C; end
-end
-
-class B &lt; A
-  module C; end
-end
-
-B.new.get_c #self.class是B，但是并不会查找B::C 当前打开类是A，
-# NameError: uninitialized constant A::C
+<pre><code>gnatsd -p 6222 -cluster nats://127.0.0.1:7222 -routes nats://127.0.0.1:5222
 </code></pre>
 
-<h3 id="object">Object::</h3>
+<p>启动的时候指定routes，如果想加入其他node本身必须也以cluster模式启动。启动自己的cluster监听之后接下来进入上面的<code>s.solicitRoutes(s.getOpts().Routes)</code>连接指定的其他node。</p>
 
-<p>在顶级作用域的时候，Module.nesting是[]，所以常量直接在当前打开的class和他的祖先里查找，虽然你看不到，但是顶级作用域里的当前打开类是Object。</p>
-
-<pre><code>class Object
-  module C; end
-end
-C == Object::C
+<pre><code class="language-go">func (s *Server) solicitRoutes(routes []*url.URL) {
+	for _, r := range routes {
+		route := r
+		s.startGoRoutine(func() { s.connectToRoute(route, true) })
+	}
+}
 </code></pre>
 
-<p>虽然还没有说，但是你也应该注意到，新定义的常量也会在当前打开类里进行定义，所以顶级作用域里定义的常量也会在Object里进行定义：</p>
+<p>之后就会进行TCP连接并且对对应的读写进行监听，这个createRoute同时用于监听有新的node连接：</p>
 
-<pre><code>module C; end
-Object::C == C
+<pre><code class="language-go">func (s *Server) createRoute(conn net.Conn, rURL *url.URL) *client {
+  ...
+  // 连接之后新建client并且开始监听读写，因为都是client所以读写流程跟server一致，只是typ不一样会进入不同的判断流程
+	c := &amp;client{srv: s, nc: conn, opts: clientOpts{}, typ: ROUTER, route: r}
+	c.initClient()
+	c.setPingTimer()
+	s.startGoRoutine(func() { c.readLoop() })
+	s.startGoRoutine(c.writeLoop)
+  ...
+}
 </code></pre>
 
-<p>这个就解释了为什么在顶级作用域里定义的常量在哪里都可以使用，因为在ruby里大部分类都是Object的子类，所以Object总是在其他类的祖先链里，所以在顶级作用域里定义的常量在其他地方都可以使用。</p>
+<h2 id="3-转发消息">3. 转发消息</h2>
 
-<p>所以如果你使用过BasicObject(不是Objet的子类)，你会注意到你在BasicObject内部无法访问顶级作用域的常量。</p>
+<p>先启动一个socat监听cluster接口：</p>
 
-<pre><code>class Foo &lt; BasicObject
-  Kernel
-end
-# NameError: uninitialized constant Foo::Kernel
+<pre><code> socat -v  tcp-l:5223,fork tcp-connect:127.0.0.1:5222
 </code></pre>
 
-<p>如果你想在这种情况下使用，可以使用::Kernel来访问Object::Kernel。</p>
+<p>可以看到当第二个server启动的时候回先发送一个connect+info，然后服务器会返回一个info。</p>
 
-<p>Ruby假设你会把module混入到继承自Object的class之中，所以如果当前打开的是一个module，也会把Object添加到祖先链之中。所以可以在module中使用顶级作用域的常量。</p>
+<p>当有一个新的server加入的时候，收到的INFO会转发给其他nodes，而其他的node收到info之后就会去试图连接这个新的node，保证了所有node之间都互相连接。所以我们只看一下info的处理就好：</p>
 
-<pre><code>module A; end
-module B;
-  A == Object::A
-end
+<pre><code class="language-go"> // parser.go
+ // 如前所述，所有的命令都是通过parser来解析的：info命令会一直解析到INFO_ARG
+case INFO_ARG:
+    ...
+    if err := c.processInfo(arg); err != nil {
+      return err
+    }
+    ...
 </code></pre>
 
-<h3 id="class-eval">class_eval</h3>
+<p>上面也介绍了，对于命令的处理其实只是client的类型不一样：</p>
 
-<p>正如上面提到的，常量会查找当前打开的类或者module，当前打开取决于周围的class或者module关键字，所以，如果你使用class_eval或者module_eval来执行block，这个并不会修改当前打开类。还是会在block定义的作用域内查找。</p>
-
-<pre><code>class A
-  module B; end
-end
-
-class C
-  module B; end
-  A.class_eval{ B } == C::B
-end
+<pre><code class="language-go"> // client.go processInfo
+ if c.typ == ROUTER {
+   c.processRouteInfo(&amp;info)
+ }
 </code></pre>
 
-<p>不过略复杂的事实是，如果你使用字符串来eval，在class_eval的情况下，Module.nesting中会包含自己的class，在instance_eval的情况下，Module.nesting中则会包含这个object的singleton class。</p>
+<p>在processRouteInfo中有两种处理，一种是收到了一个新加入节点的info的转发：</p>
 
-<pre><code>class A
-  module B; end
-end
-
-class C
-  module B; end
-  A.class_eval(&quot;B&quot;) == A::B
-end
+<pre><code class="language-go"> // 当前client已经是route client，同时不是新收到info route的client
+ // 这种情况已经不会继续转发
+ if remoteID != &quot;&quot; &amp;&amp; remoteID != info.ID {
+   c.mu.Unlock()
+   s.processImplicitRoute(info)
+   return
+ }
 </code></pre>
 
-<h3 id="其他细节">其他细节</h3>
+<p>如上的情况会调用connect去连接这个新的node：</p>
 
-<p>最后我想指出，你在一个class的singleton里是无法访问在class内定义的常量。</p>
-
-<pre><code>class A
-  module B; end
-end
-class &lt;&lt; A
-  B
-end
-# NameError: uninitialized constant Class::B
+<pre><code class="language-go"> func (s *Server) processImplicitRoute(info *Info) {
+  ...
+ 	s.startGoRoutine(func() { s.connectToRoute(r, false) })
+ }
 </code></pre>
 
-<p>这是因为singleton class的祖先链中并不包含自身的class，直接从Class开始。</p>
+<p>另一种情况就是收到了一个新的info，这种情况下我们需要把这个info转发给其他node：</p>
 
-<pre><code>class A
-  module B; end
-end
-class &lt;&lt; A; ancestors; end
-[Class, Module, Object, Kernel, BasicObject]
+<pre><code class="language-go">func (c *client) processRouteInfo(info *Info) {
+  ...
+	s.forwardNewRouteInfoToKnownServers(info)
+  ...
+
+}
+func (s *Server) forwardNewRouteInfoToKnownServers(info *Info) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	b, _ := json.Marshal(info)
+	infoJSON := []byte(fmt.Sprintf(InfoProto, b))
+
+	for _, r := range s.routes {
+		r.mu.Lock()
+		if r.route.remoteID != info.ID {
+			r.sendInfo(infoJSON)
+		}
+		r.mu.Unlock()
+	}
+}
 </code></pre>
 
-<p>相似的情况下，还需要指出已经在Module.nesting里的class的父类并不会出现在Module.nesting之中，如下面的A。</p>
+<h2 id="4-总结">4. 总结</h2>
 
-<pre><code>class A
-  module B; end
-end
+<p>因为是边读边整理的blog，所以整体逻辑有些乱，之后再重新整理下，大体上关键点如下：</p>
 
-class C &lt; A
-  class D
-    B
-  end
-end
-# NameError: uninitialized constant C::D::B
-</code></pre>
+<ul>
+<li>管理client连接 readloop&amp;writeloop</li>
+<li>sublist存储订阅信息</li>
+<li>状态机命令parser</li>
+<li>集群处理</li>
+</ul>
 
-<h3 id="总结">总结</h3>
+<p>nats最大的特点是高throughout，从源码中我们也都能找到答案：</p>
 
-<p>常量查找并不难，只需要记住查找词法包围的class和module，你可以使用Module.nesting里的第一个值来当作当前打开类或者模块，如果这个值为空，则当前打开类是Object。</p>
+<ul>
+<li>不存储message（对比mq，kafka）</li>
+<li>因为不需要存储message，所以集群也不涉及一致性问题</li>
+<li>因为不涉及一致性问题，所以信息在集群之间只是简单转发，同时不做错误处理，更简单</li>
+<li>出错统一由应用自己解决</li>
+</ul>
 
-<p>下面的代码模拟了ruby内部的常量查找方式，你会注意到我使用字符串作为binding.eval的变量所以Module.nesting是binding的object而不是block。</p>
-
-<pre><code>class Binding
-  def const(name)
-    eval &lt;&lt;-CODE, __FILE__, __LINE__ + 1
-      modules = Module.nesting + (Module.nesting.first || Object).ancestors
-      modules += Object.ancestors if Module.nesting.first.class == Module
-      found = nil
-
-      modules.detect do |mod|
-        found = mod.const_get(#{name.inspect}, false) rescue nil
-      end
-      found or const_missing(#{name.inspect})
-    CODE
-  end
-end
-</code></pre>
-
-<p>(翻译完)</p>
-
-<h3 id="其他">其他</h3>
-
-<p>实际上常量查找是很好玩的一个过程，可以参考一下Rails实现const_missing和const_get的方法。</p>
-
-<p>可以解决诸多疑惑，例如:</p>
-
-<pre><code>class Person
-end
-
-String.const_get(:Person) # Person
-String::Person # Person
-String::Person::String # String  
-</code></pre>
+<p>所以nats更好的对比对象应该是service discovery+rpc，同时也有nats streaming实现了持久化的机制（还没看），在通信方式上已经具备了一个mq的基础功能，可以作为了解mq的一个很好起点，同时也有其自身的适用场景。</p>
 
       </div>
     </div>

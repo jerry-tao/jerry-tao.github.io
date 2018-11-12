@@ -3,8 +3,8 @@
 <head>
   
   <meta charset="utf-8">
-  <title>关于Constant查找的一切(译)</title>
-  <meta name="description" content="关于Constant查找的一切(译)">
+  <title>Alg</title>
+  <meta name="description" content="Alg">
   <meta name="author" content="">
   
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -337,6 +337,8 @@ body {
 
   
   
+  <link href="http://blog.jerry-tao.com/categories/alg/index.xml" rel="alternate" type="application/rss+xml" title="Jerry Tao Feed" />
+  
 
   <meta name="generator" content="Hugo 0.37" />
 
@@ -426,253 +428,30 @@ body {
 </div>
 
 
+
 <div class="pure-g">
   <div class="pure-u-1-24 pure-u-md-1-6"></div>
   <div class="pure-u-11-12 pure-u-md-2-3">
-    <div class="post">
+    <div class="post-content">
+      <p class="posts-name">Alg:</p>
 
-      <div class="post-title">
-        <p class="footnote">
-        <time class="">01-11-2016</time>
+      <ul class="posts">
         
         
-        |
+        
+        <li>
+          
+          <a class="post-list" href="http://blog.jerry-tao.com/2018/11/12/bit-op/">Leetcode中的位操作</a>
+
+          <p class="footnote">
+          <time datetime="11-12-2018">
+            11-12-2018
+          </time>
+          </p>
+        </li>
         
         
-
-        
-        categories: [<a href="http://blog.jerry-tao.com/categories/archived">archived</a> ]
-        
-
-        
-        </p>
-        <h1>关于Constant查找的一切(译)</h1>
-      </div>
-
-      <div class="post-content">
-        
-
-<p><strong><em>注：此文翻译整理自<a href="https://cirw.in/blog/constant-lookup，推荐关注，pry主要贡献人">https://cirw.in/blog/constant-lookup，推荐关注，pry主要贡献人</a></em></strong></p>
-
-<p>使用常量很简单，理解如何查找常量的很麻烦。</p>
-
-<p>虽然一句话就可以说清楚常量查找，<strong><em>依次在Module.nesting, Module.nesting.first.ancestors中查找，如果Module.nesting.first是nil，则在Object.ancestors中查找。</em></strong>，但是为了更好的理解，我们还是举几个例子吧。</p>
-
-<p><img src="/assets/images/for_example.jpg" alt="举几个栗子" /></p>
-
-<h3 id="module-nesting">Module.nesting</h3>
-
-<p>Ruby首先会根据词法作用域(lexical scope)周围的module或者classes的关联的常量来查找:</p>
-
-<pre><code>module A
-  module B; end
-  module C
-    module D
-      B == A::B
-    end
-  end
-end
-</code></pre>
-
-<p>上面的例子里在D中的B首先会查找： A::C::D::B (不存在), 然后 A::C::B (不存在), 最后 A::B (找到了)。</p>
-
-<p>跟ruby里的其他东西一样, 查找常量的namespace chains也是在运行时通过Module.nesting可以实现自省的（运行时知道自己的Module.nesting）：</p>
-
-<pre><code>module A
-  module C
-    module D
-      Module.nesting == [A::C::D, A::C, A]
-    end
-  end
-end
-</code></pre>
-
-<p>如果你尝试过用简写的声明方式来重打开一个module，你可能已经注意到不使用完整的namespace是无法访问其他常量的。这是因为外面的namespace并没有添加到Module.nesting当中：</p>
-
-<pre><code>module A
-  module B; end
-end
-
-# 错误
-module A::C
-  B
-end
-
-# 正确
-module A
-  module D
-    B
-  end
-end
-# NameError: uninitialized constant A::C::B
-</code></pre>
-
-<p>上面错误的例子中，如果要使用B，那么Module.nesting里必须包含A, 但是上面的nesting里只有[A::C]</p>
-
-<h3 id="ancestors">Ancestors</h3>
-
-<p>如果在Module.nesting中找不到, Ruby就会在当前打开class或者module的祖先中查找。</p>
-
-<pre><code>class A
-  module B; end
-end
-
-class C &lt; A
-  B == A::B
-end
-</code></pre>
-
-<p>当前打开是指最里面的class或者module，例如上面查找B的C。一个常见的误解就是常量查找会使用self.class，例如上面也许觉得B应该查找C::B，但实际上并不会这样查找，参考下面的例子。</p>
-
-<pre><code>class A
-  def get_c; C; end
-end
-
-class B &lt; A
-  module C; end
-end
-
-B.new.get_c #self.class是B，但是并不会查找B::C 当前打开类是A，
-# NameError: uninitialized constant A::C
-</code></pre>
-
-<h3 id="object">Object::</h3>
-
-<p>在顶级作用域的时候，Module.nesting是[]，所以常量直接在当前打开的class和他的祖先里查找，虽然你看不到，但是顶级作用域里的当前打开类是Object。</p>
-
-<pre><code>class Object
-  module C; end
-end
-C == Object::C
-</code></pre>
-
-<p>虽然还没有说，但是你也应该注意到，新定义的常量也会在当前打开类里进行定义，所以顶级作用域里定义的常量也会在Object里进行定义：</p>
-
-<pre><code>module C; end
-Object::C == C
-</code></pre>
-
-<p>这个就解释了为什么在顶级作用域里定义的常量在哪里都可以使用，因为在ruby里大部分类都是Object的子类，所以Object总是在其他类的祖先链里，所以在顶级作用域里定义的常量在其他地方都可以使用。</p>
-
-<p>所以如果你使用过BasicObject(不是Objet的子类)，你会注意到你在BasicObject内部无法访问顶级作用域的常量。</p>
-
-<pre><code>class Foo &lt; BasicObject
-  Kernel
-end
-# NameError: uninitialized constant Foo::Kernel
-</code></pre>
-
-<p>如果你想在这种情况下使用，可以使用::Kernel来访问Object::Kernel。</p>
-
-<p>Ruby假设你会把module混入到继承自Object的class之中，所以如果当前打开的是一个module，也会把Object添加到祖先链之中。所以可以在module中使用顶级作用域的常量。</p>
-
-<pre><code>module A; end
-module B;
-  A == Object::A
-end
-</code></pre>
-
-<h3 id="class-eval">class_eval</h3>
-
-<p>正如上面提到的，常量会查找当前打开的类或者module，当前打开取决于周围的class或者module关键字，所以，如果你使用class_eval或者module_eval来执行block，这个并不会修改当前打开类。还是会在block定义的作用域内查找。</p>
-
-<pre><code>class A
-  module B; end
-end
-
-class C
-  module B; end
-  A.class_eval{ B } == C::B
-end
-</code></pre>
-
-<p>不过略复杂的事实是，如果你使用字符串来eval，在class_eval的情况下，Module.nesting中会包含自己的class，在instance_eval的情况下，Module.nesting中则会包含这个object的singleton class。</p>
-
-<pre><code>class A
-  module B; end
-end
-
-class C
-  module B; end
-  A.class_eval(&quot;B&quot;) == A::B
-end
-</code></pre>
-
-<h3 id="其他细节">其他细节</h3>
-
-<p>最后我想指出，你在一个class的singleton里是无法访问在class内定义的常量。</p>
-
-<pre><code>class A
-  module B; end
-end
-class &lt;&lt; A
-  B
-end
-# NameError: uninitialized constant Class::B
-</code></pre>
-
-<p>这是因为singleton class的祖先链中并不包含自身的class，直接从Class开始。</p>
-
-<pre><code>class A
-  module B; end
-end
-class &lt;&lt; A; ancestors; end
-[Class, Module, Object, Kernel, BasicObject]
-</code></pre>
-
-<p>相似的情况下，还需要指出已经在Module.nesting里的class的父类并不会出现在Module.nesting之中，如下面的A。</p>
-
-<pre><code>class A
-  module B; end
-end
-
-class C &lt; A
-  class D
-    B
-  end
-end
-# NameError: uninitialized constant C::D::B
-</code></pre>
-
-<h3 id="总结">总结</h3>
-
-<p>常量查找并不难，只需要记住查找词法包围的class和module，你可以使用Module.nesting里的第一个值来当作当前打开类或者模块，如果这个值为空，则当前打开类是Object。</p>
-
-<p>下面的代码模拟了ruby内部的常量查找方式，你会注意到我使用字符串作为binding.eval的变量所以Module.nesting是binding的object而不是block。</p>
-
-<pre><code>class Binding
-  def const(name)
-    eval &lt;&lt;-CODE, __FILE__, __LINE__ + 1
-      modules = Module.nesting + (Module.nesting.first || Object).ancestors
-      modules += Object.ancestors if Module.nesting.first.class == Module
-      found = nil
-
-      modules.detect do |mod|
-        found = mod.const_get(#{name.inspect}, false) rescue nil
-      end
-      found or const_missing(#{name.inspect})
-    CODE
-  end
-end
-</code></pre>
-
-<p>(翻译完)</p>
-
-<h3 id="其他">其他</h3>
-
-<p>实际上常量查找是很好玩的一个过程，可以参考一下Rails实现const_missing和const_get的方法。</p>
-
-<p>可以解决诸多疑惑，例如:</p>
-
-<pre><code>class Person
-end
-
-String.const_get(:Person) # Person
-String::Person # Person
-String::Person::String # String  
-</code></pre>
-
-      </div>
+      </ul>
     </div>
   </div>
   <div class="pure-u-1-24 pure-u-md-1-6"></div>
@@ -694,7 +473,7 @@ String::Person::String # String
 
         </ul>
         <a href="#" class="pure-menu-link pull-right" id="gototop-btn">↑↑</a>
-        <a href="" class="pure-menu-link pull-right">RSS</a>
+        <a href="http://blog.jerry-tao.com/categories/alg/index.xml" class="pure-menu-link pull-right">RSS</a>
       </div>
       
       <p id="foot-copyright">(c) 2013 -- 2017</p>
